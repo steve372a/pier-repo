@@ -1,0 +1,48 @@
+name: Pier Auto Update
+
+on:
+  push:
+    branches: [ main ]  # 当有新代码推送到 main 分支时触发
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest  # 使用 Linux 虚拟机，完全免费
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4  # 获取仓库内容
+
+      - name: Generate Database Files
+        run: |
+          # 1. 定义临时变量
+          PIE_DIR="./sources"
+          OUTPUT_FILE="./db.sque"
+          DBM_FILE="./dbm.sque"
+
+          # 2. 清理旧文件
+          rm -f $OUTPUT_FILE $DBM_FILE
+          echo "Old files cleared."
+
+          # 3. 扫描 metadata 并生成 db.sque
+          # 使用 printf "\r\n" 确保 XP 端的兼容性
+          find "$PIE_DIR" -maxdepth 1 -name "*.metadata" -print0 | while IFS= read -r -d '' file; do
+              filename=$(basename -- "$file" .metadata)
+              printf "%s\r\n" "$filename" >> "$OUTPUT_FILE"
+          done
+
+          # 4. 自然排序
+          sort -V "$OUTPUT_FILE" -o "$OUTPUT_FILE"
+
+          # 5. 计算总数并生成 dbm.sque
+          count=$(wc -l < "$OUTPUT_FILE")
+          printf "%d" "$count" > "$DBM_FILE"
+
+          echo "Database update complete. Total packages: $count"
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add db.sque dbm.sque
+          # 只有在文件内容确实变化时才提交
+          git commit -m "Auto: Update database indices" || exit 0
+          git push
