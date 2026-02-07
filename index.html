@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pier Repo - 实时索引预览</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #24292e; background: #ffffff; }
+        h1 { display: flex; align-items: center; border-bottom: 1px solid #eaecef; padding-bottom: 10px; }
+        .badge { font-size: 12px; background: #2ea44f; color: white; padding: 2px 8px; border-radius: 10px; margin-left: 10px; }
+        .card { border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px; margin-bottom: 20px; background: #f6f8fa; }
+        .stats { font-weight: bold; color: #0366d6; }
+        pre { background: #1b1f23; color: #e1e4e8; padding: 16px; border-radius: 6px; overflow: auto; font-size: 14px; line-height: 1.45; max-height: 500px; }
+        a { color: #0366d6; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>📦 Pier 软件仓库 <span class="badge">已联网</span></h1>
+    
+    <div class="card">
+        <p>📊 <strong>仓库统计：</strong> <span id="pkg-count" class="stats">读取中...</span> 个软件包</p>
+        <p>🔗 <strong>原始文件：</strong> 
+            [ <a href="db.sque" target="_blank">db.sque</a> ] 
+            [ <a href="dbm.sque" target="_blank">dbm.sque</a> ]
+        </p>
+    </div>
+
+    <h3>🔍 索引实时预览 (db.sque)</h3>
+    <pre id="preview">正在连接至 GitHub Pages 并解析数据...</pre>
+
+    <script>
+        // 1. 读取总数文件 dbm.sque
+        fetch('dbm.sque')
+            .then(res => res.text())
+            .then(count => {
+                document.getElementById('pkg-count').textContent = count.trim();
+            })
+            .catch(() => document.getElementById('pkg-count').textContent = 'N/A');
+
+        // 2. 读取索引明细 db.sque
+        fetch('db.sque')
+            .then(response => {
+                if (!response.ok) throw new Error('索引文件尚未生成，请检查 Actions 运行状态');
+                return response.text();
+            })
+            .then(data => {
+                // 展示内容，并将 \r\n 渲染为可见换行
+                document.getElementById('preview').textContent = data;
+            })
+            .catch(err => {
+                document.getElementById('preview').textContent = '❌ 读取失败: ' + err.message;
+            });
+    </script>
+</body>
+</html>
