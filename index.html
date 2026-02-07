@@ -1,55 +1,102 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Pier Repo - 实时索引预览</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pier Repo - 软件仓库预览</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #24292e; background: #ffffff; }
-        h1 { display: flex; align-items: center; border-bottom: 1px solid #eaecef; padding-bottom: 10px; }
-        .badge { font-size: 12px; background: #2ea44f; color: white; padding: 2px 8px; border-radius: 10px; margin-left: 10px; }
-        .card { border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px; margin-bottom: 20px; background: #f6f8fa; }
-        .stats { font-weight: bold; color: #0366d6; }
-        pre { background: #1b1f23; color: #e1e4e8; padding: 16px; border-radius: 6px; overflow: auto; font-size: 14px; line-height: 1.45; max-height: 500px; }
-        a { color: #0366d6; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        :root { --primary: #0366d6; --bg: #f6f8fa; --text: #24292e; }
+        body { font-family: -apple-system, system-ui, sans-serif; line-height: 1.6; max-width: 900px; margin: 40px auto; padding: 0 20px; color: var(--text); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eaecef; padding-bottom: 10px; }
+        .badge { font-size: 12px; background: #2ea44f; color: white; padding: 2px 8px; border-radius: 10px; }
+        .search-container { margin: 20px 0; position: relative; }
+        #search-input { width: 100%; padding: 12px 40px 12px 15px; font-size: 16px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .lang-switch { font-size: 0.9em; color: var(--primary); cursor: pointer; }
+        .stats-card { background: var(--bg); border: 1px solid #e1e4e8; border-radius: 6px; padding: 15px; margin-bottom: 20px; display: flex; gap: 20px; }
+        .preview-container { border: 1px solid #e1e4e8; border-radius: 6px; background: #1b1f23; position: relative; }
+        #preview { color: #e1e4e8; padding: 15px; margin: 0; overflow: auto; font-family: monospace; max-height: 600px; white-space: pre-wrap; }
+        .no-result { color: #888; text-align: center; padding: 20px; }
+        .en { display: none; } /* 默认显示中文 */
     </style>
 </head>
 <body>
-    <h1>📦 Pier 软件仓库 <span class="badge">已联网</span></h1>
-    
-    <div class="card">
-        <p>📊 <strong>仓库统计：</strong> <span id="pkg-count" class="stats">读取中...</span> 个软件包</p>
-        <p>🔗 <strong>原始文件：</strong> 
-            [ <a href="db.sque" target="_blank">db.sque</a> ] 
-            [ <a href="dbm.sque" target="_blank">dbm.sque</a> ]
-        </p>
+
+<div class="header">
+    <h1>📦 Pier Repo <span class="badge">Live</span></h1>
+    <div class="lang-switch" onclick="toggleLang()">English / 中文</div>
+</div>
+
+<div class="stats-card">
+    <div>
+        <span class="zh">📊 软件包总数：</span><span class="en">📊 Total Packages:</span>
+        <strong id="pkg-count">...</strong>
     </div>
+    <div>
+        <span class="zh">🔗 原始文件：</span><span class="en">🔗 Raw Files:</span>
+        <a href="db.sque" target="_blank">db.sque</a>
+    </div>
+</div>
 
-    <h3>🔍 索引实时预览 (db.sque)</h3>
-    <pre id="preview">正在连接至 GitHub Pages 并解析数据...</pre>
+<div class="search-container">
+    <input type="text" id="search-input" placeholder="输入关键字模糊搜索... / Search packages..." oninput="doSearch()">
+</div>
 
-    <script>
-        // 1. 读取总数文件 dbm.sque
-        fetch('dbm.sque')
-            .then(res => res.text())
-            .then(count => {
-                document.getElementById('pkg-count').textContent = count.trim();
-            })
-            .catch(() => document.getElementById('pkg-count').textContent = 'N/A');
+<div class="preview-container">
+    <pre id="preview">Loading data...</pre>
+</div>
 
-        // 2. 读取索引明细 db.sque
-        fetch('db.sque')
-            .then(response => {
-                if (!response.ok) throw new Error('索引文件尚未生成，请检查 Actions 运行状态');
-                return response.text();
-            })
-            .then(data => {
-                // 展示内容，并将 \r\n 渲染为可见换行
-                document.getElementById('preview').textContent = data;
-            })
-            .catch(err => {
-                document.getElementById('preview').textContent = '❌ 读取失败: ' + err.message;
-            });
-    </script>
+<script>
+    let allData = []; // 存储原始行数据
+    let isEnglish = false;
+
+    // 1. 初始化读取数据
+    Promise.all([
+        fetch('dbm.sque').then(r => r.text()),
+        fetch('db.sque').then(r => r.text())
+    ]).then(([count, content]) => {
+        document.getElementById('pkg-count').textContent = count.trim();
+        allData = content.split('\n').filter(line => line.trim() !== "");
+        render(allData);
+    }).catch(err => {
+        document.getElementById('preview').innerHTML = `<span style="color:red">Error: ${err.message}</span>`;
+    });
+
+    // 2. 模糊搜索逻辑
+    function doSearch() {
+        const term = document.getElementById('search-input').value.toLowerCase();
+        // 模糊过滤：只要行内容包含输入字符即可
+        const filtered = allData.filter(line => line.toLowerCase().includes(term));
+        render(filtered);
+    }
+
+    // 3. 渲染列表
+    function render(data) {
+        const container = document.getElementById('preview');
+        if (data.length === 0) {
+            container.innerHTML = '<div class="no-result">无匹配结果 / No results found</div>';
+            return;
+        }
+        // 重新拼合文本展示，保留原有排序
+        container.textContent = data.join('\n');
+    }
+
+    // 4. 中英文切换
+    function toggleLang() {
+        isEnglish = !isEnglish;
+        const zhEls = document.querySelectorAll('.zh');
+        const enEls = document.querySelectorAll('.en');
+        const input = document.getElementById('search-input');
+
+        if (isEnglish) {
+            zhEls.forEach(el => el.style.display = 'none');
+            enEls.forEach(el => el.style.display = 'inline');
+            input.placeholder = "Type to search...";
+        } else {
+            zhEls.forEach(el => el.style.display = 'inline');
+            enEls.forEach(el => el.style.display = 'none');
+            input.placeholder = "输入关键字模糊搜索...";
+        }
+    }
+</script>
 </body>
 </html>
