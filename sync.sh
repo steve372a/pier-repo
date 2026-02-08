@@ -1,4 +1,5 @@
 #!/bin/bash
+find . -name ".DS_Store" -depth -exec rm {} \;
 
 # --- 配置区域 ---
 # 如果你之前没有配置过全局账号，可以取消下面两行的注释
@@ -25,6 +26,6 @@ git commit -m "$commit_msg"
 
 # 5. 推送到 GitHub
 echo "📤 正在上传到 GitHub..."
-git push origin main
+git push origin main --force
 
 echo "✅ 同步完成！机器人正在云端生成索引..."
