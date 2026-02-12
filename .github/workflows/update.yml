@@ -3,13 +3,18 @@ name: Pier Auto Update
 on:
   push:
     branches: [ main ]  # 当有新代码推送到 main 分支时触发
+  workflow_dispatch:      # 允许你在网页手动触发，调试更方便
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest  # 使用 Linux 虚拟机，完全免费
+    runs-on: ubuntu-latest
+    # 必须赋予写入权限，否则 Action 没资格推送到你的仓库
+    permissions:
+      contents: write
+      
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4  # 获取仓库内容
+        uses: actions/checkout@v4
 
       - name: Generate Database Files
         run: |
@@ -23,21 +28,21 @@ jobs:
           touch $OUTPUT_FILE
 
           # 3. 扫描压缩包并提取描述
+          # 使用 unzip -p 直接读取内存流，不产生碎文件
           find "$PIE_DIR" -maxdepth 1 -name "*.metadata" -print0 | while IFS= read -r -d '' zipfile; do
               pkgname=$(basename -- "$zipfile" .metadata)
               
-              # 【核心逻辑】从压缩包里提取 metadata.sque 的内容
-              # 然后用 sed 找到 [ProFile] 标记并提取其下一行
+              # 核心提取逻辑：定位 [ProFile] 并获取下一行内容
               profile=$(unzip -p "$zipfile" "metadata.sque" | sed -n '/\[ProFile\]/{n;p;}' | tr -d '\r' | xargs)
 
-              # 如果没取到描述，给个保底
-              if [ -z "$profile" ]; then profile="无描述"; fi
+              # 如果没取到描述，给个保底，防止 AI 抓瞎
+              if [ -z "$profile" ]; then profile="暂无描述"; fi
 
               # 按照 XP 兼容格式拼接：包名 | 简介
               printf "%s | %s\r\n" "$pkgname" "$profile" >> "$OUTPUT_FILE"
           done
 
-          # 4. 自然排序
+          # 4. 自然排序（按包名）
           sort -V "$OUTPUT_FILE" -o "$OUTPUT_FILE"
 
           # 5. 生成统计
@@ -45,3 +50,19 @@ jobs:
           printf "%d" "$count" > "$DBM_FILE"
 
           echo "Database update complete. Integrated $count package profiles."
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 强制添加生成的文件
+          git add db.sque dbm.sque
+          
+          # 只有在内容真的发生变化时才提交，防止 Action 自己触发自己导致死循环
+          if git diff --staged --quiet; then
+            echo "No changes detected in database files."
+          else
+            git commit -m "Auto: Update database indices with package profiles"
+            git push
+          fi
