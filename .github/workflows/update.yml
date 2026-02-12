@@ -13,36 +13,35 @@ jobs:
 
       - name: Generate Database Files
         run: |
-          # 1. 定义临时变量
+          # 1. 定义变量
           PIE_DIR="./sources"
           OUTPUT_FILE="./db.sque"
           DBM_FILE="./dbm.sque"
 
-          # 2. 清理旧文件
+          # 2. 清理
           rm -f $OUTPUT_FILE $DBM_FILE
-          echo "Old files cleared."
+          touch $OUTPUT_FILE
 
-          # 3. 扫描 metadata 并生成 db.sque
-          # 使用 printf "\r\n" 确保 XP 端的兼容性
-          find "$PIE_DIR" -maxdepth 1 -name "*.metadata" -print0 | while IFS= read -r -d '' file; do
-              filename=$(basename -- "$file" .metadata)
-              printf "%s\r\n" "$filename" >> "$OUTPUT_FILE"
+          # 3. 扫描压缩包并提取描述
+          find "$PIE_DIR" -maxdepth 1 -name "*.metadata" -print0 | while IFS= read -r -d '' zipfile; do
+              pkgname=$(basename -- "$zipfile" .metadata)
+              
+              # 【核心逻辑】从压缩包里提取 metadata.sque 的内容
+              # 然后用 sed 找到 [ProFile] 标记并提取其下一行
+              profile=$(unzip -p "$zipfile" "metadata.sque" | sed -n '/\[ProFile\]/{n;p;}' | tr -d '\r' | xargs)
+
+              # 如果没取到描述，给个保底
+              if [ -z "$profile" ]; then profile="无描述"; fi
+
+              # 按照 XP 兼容格式拼接：包名 | 简介
+              printf "%s | %s\r\n" "$pkgname" "$profile" >> "$OUTPUT_FILE"
           done
 
           # 4. 自然排序
           sort -V "$OUTPUT_FILE" -o "$OUTPUT_FILE"
 
-          # 5. 计算总数并生成 dbm.sque
+          # 5. 生成统计
           count=$(wc -l < "$OUTPUT_FILE")
           printf "%d" "$count" > "$DBM_FILE"
 
-          echo "Database update complete. Total packages: $count"
-
-      - name: Commit and Push
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add db.sque dbm.sque
-          # 只有在文件内容确实变化时才提交
-          git commit -m "Auto: Update database indices" || exit 0
-          git push
+          echo "Database update complete. Integrated $count package profiles."
