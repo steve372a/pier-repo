@@ -1,0 +1,10 @@
+[ToUse]
+czadb
+
+[DefaultOpen]
+ADBTOOLS_4.2.3
+ADBTOOLS_*
+::end
+
+[Alias]
+::end
