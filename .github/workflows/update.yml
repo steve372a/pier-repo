@@ -2,13 +2,12 @@ name: Pier Auto Update
 
 on:
   push:
-    branches: [ main ]  # 当有新代码推送到 main 分支时触发
-  workflow_dispatch:      # 允许你在网页手动触发，调试更方便
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # 必须赋予写入权限，否则 Action 没资格推送到你的仓库
     permissions:
       contents: write
       
@@ -20,49 +19,62 @@ jobs:
         run: |
           # 1. 定义变量
           PIE_DIR="./sources"
+          TEMP_FILE="./db.tmp"
           OUTPUT_FILE="./db.sque"
           DBM_FILE="./dbm.sque"
 
-          # 2. 清理
-          rm -f $OUTPUT_FILE $DBM_FILE
-          touch $OUTPUT_FILE
+          # 2. 清理环境
+          rm -f $TEMP_FILE $OUTPUT_FILE $DBM_FILE
+          touch $TEMP_FILE
 
-          # 3. 扫描压缩包并提取描述
-          # 使用 unzip -p 直接读取内存流，不产生碎文件
-          find "$PIE_DIR" -maxdepth 1 -name "*.metadata" -print0 | while IFS= read -r -d '' zipfile; do
-              pkgname=$(basename -- "$zipfile" .metadata)
+          # 3. 遍历元数据文件
+          find "$PIE_DIR" -maxdepth 1 -name "*.metadata" -print0 | while IFS= read -r -d '' metafile; do
               
-              # 核心提取逻辑：定位 [ProFile] 并获取下一行内容
-              profile=$(unzip -p "$zipfile" "metadata.sque" | sed -n '/\[ProFile\]/{n;p;}' | tr -d '\r' | xargs)
+              # 提取字段逻辑
+              pkgname=$(sed -n '/\[PackageName\]/{n;p;}' "$metafile" | tr -d '\r' | xargs)
+              if [ -z "$pkgname" ]; then
+                  pkgname=$(basename -- "$metafile" .metadata)
+              fi
+              
+              version=$(sed -n '/\[Version\]/{n;p;}' "$metafile" | tr -d '\r' | xargs)
+              os_info=$(sed -n '/\[OS\]/{n;p;}' "$metafile" | tr -d '\r' | xargs)
+              profile=$(sed -n '/\[ProFile\]/{n;p;}' "$metafile" | tr -d '\r' | xargs)
+              # 新增：提取 InstallDir
+              inst_dir=$(sed -n '/\[InstallDir\]/{n;p;}' "$metafile" | tr -d '\r' | xargs)
 
-              # 如果没取到描述，给个保底，防止 AI 抓瞎
-              if [ -z "$profile" ]; then profile="暂无描述"; fi
+              # 保底处理
+              [ -z "$version" ] && version="0.0.0"
+              [ -z "$os_info" ] && os_info="XP"
+              [ -z "$profile" ] && profile="暂无描述"
+              [ -z "$inst_dir" ] && inst_dir="\"\"" # 如果为空，填入空字符串标识
 
-              # 按照 XP 兼容格式拼接：包名 | 简介
-              printf "%s | %s\r\n" "$pkgname" "$profile" >> "$OUTPUT_FILE"
+              # 写入临时文件 (包名 | 版本 | 兼容系统 | 简介 | 安装目录)
+              printf "%s | %s | %s | %s | %s\r\n" "$pkgname" "$version" "$os_info" "$profile" "$inst_dir" >> "$TEMP_FILE"
           done
 
-          # 4. 自然排序（按包名）
-          sort -V "$OUTPUT_FILE" -o "$OUTPUT_FILE"
+          # 4. 自然排序
+          sort -V "$TEMP_FILE" -o "$TEMP_FILE"
 
-          # 5. 生成统计
-          count=$(wc -l < "$OUTPUT_FILE")
+          # 5. 编码转换：UTF-8 -> GBK
+          iconv -f UTF-8 -t GBK//IGNORE "$TEMP_FILE" -o "$OUTPUT_FILE"
+
+          # 6. 生成统计文件
+          count=$(wc -l < "$TEMP_FILE")
           printf "%d" "$count" > "$DBM_FILE"
 
-          echo "Database update complete. Integrated $count package profiles."
+          echo "Database update complete. Total: $count packages."
+          rm -f $TEMP_FILE
 
       - name: Commit and Push Changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # 强制添加生成的文件
           git add db.sque dbm.sque
           
-          # 只有在内容真的发生变化时才提交，防止 Action 自己触发自己导致死循环
           if git diff --staged --quiet; then
-            echo "No changes detected in database files."
+            echo "No changes to commit."
           else
-            git commit -m "Auto: Update database indices with package profiles"
+            git commit -m "Auto: Update database indices (5 fields, GBK)"
             git push
           fi
