@@ -1,0 +1,50 @@
+[PackageName]
+7-Zip
+
+[Version]
+26.00
+
+[OS]
+XP
+
+[InstallerName]
+7zip
+
+[InstallDir]
+\7zip
+
+[URL]
+x86: 7zip.pie (default)
+x64: 7zip-x64.pie
+::end
+
+[ProFile]
+7-Zip 是一款适用于 Windows 系统的文件压缩软件。
+
+[ProFile_En]
+7-Zip is a file archiver for Windows.
+
+[DefaultOpen]
+7zFM.exe
+::end
+
+[Alias]
+zip: 7z.exe a -tzip $1 $2
+7z: 7z.exe a -t7z $1 $2
+gz: 7z.exe a -tgzip $1 $2
+xz: 7z.exe a -txz $1 $2
+unzip: 7z.exe x $1 -o$2
+::end
+
+[Author]
+Igor Pavlov.
+
+[Distributor]
+Sanakaprix
+
+[PackageSize]
+4.14 MB
+
+[License]
+GNU LGPL with BSD 3-clause and unRAR restrictions.
+See LICENSE.txt in software directory.
