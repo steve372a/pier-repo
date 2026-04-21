@@ -27,48 +27,50 @@ jobs:
           rm -f $OUTPUT_FILE $DBM_FILE $TEMP_FILE
           touch $TEMP_FILE
 
-          # 3. 遍历元数据文件
-          # 注意：此时 metafile 是 GBK 编码
+          # 3. 遍历元数据文件 (GBK 编码)
           find "$PIE_DIR" -maxdepth 1 -name "*.metadata" -print0 | while IFS= read -r -d '' metafile; do
               
-              # 由于系统环境是 UTF-8，我们需要先将 GBK 转为 UTF-8 供 sed/xargs 处理
-              # 处理完后再转回 GBK 写入临时文件
-              
+              # 定义字段提取函数
+              # 逻辑：将 GBK 文件流转为 UTF-8 处理标签，处理完立刻回流为 GBK 变量
               get_field() {
-                  # 逻辑：GBK转UTF8 -> 提取字段 -> 删掉回车 -> 去空格 -> 转回GBK
                   iconv -f GBK -t UTF-8//IGNORE "$metafile" | sed -n "/\[$1\]/{n;p;}" | tr -d '\r' | xargs | iconv -f UTF-8 -t GBK//IGNORE
               }
 
-              pkgname=$(get_field "PackageName")
+              # 根据你的要求，pkgname 使用 [InstallerName] 字段
+              pkgname=$(get_field "InstallerName")
+              
+              # 如果 InstallerName 为空，回退到 PackageName 或文件名
+              if [ -z "$pkgname" ]; then
+                  pkgname=$(get_field "PackageName")
+              fi
               if [ -z "$pkgname" ]; then
                   pkgname=$(basename -- "$metafile" .metadata | iconv -t GBK//IGNORE)
               fi
               
               version=$(get_field "Version")
               os_info=$(get_field "OS")
-              profile=$(get_field "ProFile_En")
+              profile=$(get_field "ProFile") # 这里可以根据需要改为 ProFile 或 ProFile_En
               inst_dir=$(get_field "InstallDir")
 
-              # 保底处理 (这些字符在 GBK 和 UTF-8 中字节码相同，不影响)
+              # 保底处理
               [ -z "$version" ] && version="0.0.0"
               [ -z "$os_info" ] && os_info="XP"
+              # "暂无描述" 需要转为 GBK
               [ -z "$profile" ] && profile=$(echo "暂无描述" | iconv -f UTF-8 -t GBK)
               [ -z "$inst_dir" ] && inst_dir="\"\""
 
-              # 按照 GBK 字节流写入临时文件
-              # 这里的管道符和空格在 GBK 中也是标准单字节
+              # 写入临时文件 (此时变量全是 GBK 字节流)
               printf "%s | %s | %s | %s | %s\r\n" "$pkgname" "$version" "$os_info" "$profile" "$inst_dir" >> "$TEMP_FILE"
           done
 
-          # 4. 排序
-          # LC_ALL=C 确保按照原始字节顺序排序，不会因为编码问题报错
+          # 4. 排序 (LC_ALL=C 关键：按原始字节排序，不检查 UTF-8 有效性)
           LC_ALL=C sort -V "$TEMP_FILE" -o "$OUTPUT_FILE"
 
           # 5. 生成统计文件
           count=$(wc -l < "$OUTPUT_FILE")
           printf "%d" "$count" > "$DBM_FILE"
 
-          echo "Database update complete (GBK Source -> GBK Output)."
+          echo "Database update complete. Processed $count packages (GBK Mode)."
           rm -f $TEMP_FILE
 
       - name: Commit and Push Changes
@@ -81,6 +83,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Auto: Update GBK database from GBK sources"
+            git commit -m "Auto: Update GBK database (pkgname from InstallerName)"
             git push
           fi
