@@ -19,50 +19,56 @@ jobs:
         run: |
           # 1. 定义变量
           PIE_DIR="./sources"
-          TEMP_FILE="./db.tmp"
           OUTPUT_FILE="./db.sque"
           DBM_FILE="./dbm.sque"
+          TEMP_FILE="./db.tmp"
 
           # 2. 清理环境
-          rm -f $TEMP_FILE $OUTPUT_FILE $DBM_FILE
+          rm -f $OUTPUT_FILE $DBM_FILE $TEMP_FILE
           touch $TEMP_FILE
 
           # 3. 遍历元数据文件
+          # 注意：此时 metafile 是 GBK 编码
           find "$PIE_DIR" -maxdepth 1 -name "*.metadata" -print0 | while IFS= read -r -d '' metafile; do
               
-              # 提取字段逻辑
-              pkgname=$(sed -n '/\[PackageName\]/{n;p;}' "$metafile" | tr -d '\r' | xargs)
+              # 由于系统环境是 UTF-8，我们需要先将 GBK 转为 UTF-8 供 sed/xargs 处理
+              # 处理完后再转回 GBK 写入临时文件
+              
+              get_field() {
+                  # 逻辑：GBK转UTF8 -> 提取字段 -> 删掉回车 -> 去空格 -> 转回GBK
+                  iconv -f GBK -t UTF-8//IGNORE "$metafile" | sed -n "/\[$1\]/{n;p;}" | tr -d '\r' | xargs | iconv -f UTF-8 -t GBK//IGNORE
+              }
+
+              pkgname=$(get_field "PackageName")
               if [ -z "$pkgname" ]; then
-                  pkgname=$(basename -- "$metafile" .metadata)
+                  pkgname=$(basename -- "$metafile" .metadata | iconv -t GBK//IGNORE)
               fi
               
-              version=$(sed -n '/\[Version\]/{n;p;}' "$metafile" | tr -d '\r' | xargs)
-              os_info=$(sed -n '/\[OS\]/{n;p;}' "$metafile" | tr -d '\r' | xargs)
-              profile=$(sed -n '/\[ProFile\]/{n;p;}' "$metafile" | tr -d '\r' | xargs)
-              # 新增：提取 InstallDir
-              inst_dir=$(sed -n '/\[InstallDir\]/{n;p;}' "$metafile" | tr -d '\r' | xargs)
+              version=$(get_field "Version")
+              os_info=$(get_field "OS")
+              profile=$(get_field "ProFile")
+              inst_dir=$(get_field "InstallDir")
 
-              # 保底处理
+              # 保底处理 (这些字符在 GBK 和 UTF-8 中字节码相同，不影响)
               [ -z "$version" ] && version="0.0.0"
               [ -z "$os_info" ] && os_info="XP"
-              [ -z "$profile" ] && profile="暂无描述"
-              [ -z "$inst_dir" ] && inst_dir="\"\"" # 如果为空，填入空字符串标识
+              [ -z "$profile" ] && profile=$(echo "暂无描述" | iconv -f UTF-8 -t GBK)
+              [ -z "$inst_dir" ] && inst_dir="\"\""
 
-              # 写入临时文件 (包名 | 版本 | 兼容系统 | 简介 | 安装目录)
+              # 按照 GBK 字节流写入临时文件
+              # 这里的管道符和空格在 GBK 中也是标准单字节
               printf "%s | %s | %s | %s | %s\r\n" "$pkgname" "$version" "$os_info" "$profile" "$inst_dir" >> "$TEMP_FILE"
           done
 
-          # 4. 自然排序
-          sort -V "$TEMP_FILE" -o "$TEMP_FILE"
+          # 4. 排序
+          # LC_ALL=C 确保按照原始字节顺序排序，不会因为编码问题报错
+          LC_ALL=C sort -V "$TEMP_FILE" -o "$OUTPUT_FILE"
 
-          # 5. 编码转换：UTF-8 -> GBK
-          iconv -f UTF-8 -t GBK//IGNORE "$TEMP_FILE" -o "$OUTPUT_FILE"
-
-          # 6. 生成统计文件
-          count=$(wc -l < "$TEMP_FILE")
+          # 5. 生成统计文件
+          count=$(wc -l < "$OUTPUT_FILE")
           printf "%d" "$count" > "$DBM_FILE"
 
-          echo "Database update complete. Total: $count packages."
+          echo "Database update complete (GBK Source -> GBK Output)."
           rm -f $TEMP_FILE
 
       - name: Commit and Push Changes
@@ -75,6 +81,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Auto: Update database indices (5 fields, GBK)"
+            git commit -m "Auto: Update GBK database from GBK sources"
             git push
           fi
