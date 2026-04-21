@@ -46,7 +46,7 @@ jobs:
               
               version=$(get_field "Version")
               os_info=$(get_field "OS")
-              profile=$(get_field "ProFile")
+              profile=$(get_field "ProFile_En")
               inst_dir=$(get_field "InstallDir")
 
               # 保底处理 (这些字符在 GBK 和 UTF-8 中字节码相同，不影响)
