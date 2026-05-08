@@ -22,50 +22,65 @@ jobs:
           OUTPUT_FILE="./db.sque"
           DBM_FILE="./dbm.sque"
           TEMP_FILE="./db.tmp"
+          EXTRACT_DIR="./temp_extract"
 
           # 2. 清理环境
           rm -f $OUTPUT_FILE $DBM_FILE $TEMP_FILE
+          rm -rf $EXTRACT_DIR
+          mkdir -p $EXTRACT_DIR
           touch $TEMP_FILE
 
-          # 3. 遍历 sources/*/*.metadata 文件（GBK 编码）
-          #    使用 find 搜索所有两层的 metadata 文件（例如 sources/x/xx.metadata）
+          # 3. 遍历 sources/*/*.metadata 压缩包
           find "$PIE_DIR" -mindepth 2 -maxdepth 2 -name "*.metadata" -print0 | while IFS= read -r -d '' metafile; do
               
-              # 定义字段提取函数
-              # 逻辑：将 GBK 文件流转为 UTF-8 处理标签，处理完立刻回流为 GBK 变量
+              # 为每个包创建独立的解压目录
+              PKG_DIR="$EXTRACT_DIR/$(basename "$metafile" .metadata)"
+              mkdir -p "$PKG_DIR"
+              
+              # 解压 .metadata 压缩包
+              unzip -q "$metafile" -d "$PKG_DIR" 2>/dev/null || continue
+              
+              # 读取 metadata.sque
+              METADATA_SQUE="$PKG_DIR/metadata.sque"
+              if [ ! -f "$METADATA_SQUE" ]; then
+                  echo "Warning: metadata.sque not found in $metafile" >&2
+                  continue
+              fi
+              
+              # 字段提取函数（保持原逻辑：GBK 编码）
               get_field() {
-                  iconv -f GBK -t UTF-8//IGNORE "$metafile" | sed -n "/\[$1\]/{n;p;}" | tr -d '\r' | xargs | iconv -f UTF-8 -t GBK//IGNORE
+                  iconv -f GBK -t UTF-8//IGNORE "$METADATA_SQUE" | sed -n "/\[$1\]/{n;p;}" | tr -d '\r' | xargs | iconv -f UTF-8 -t GBK//IGNORE
               }
 
-              # 根据你的要求，pkgname 使用 [InstallerName] 字段
+              # 获取字段
               pkgname=$(get_field "InstallerName")
               
-              # 如果 InstallerName 为空，回退到 PackageName 或文件名
               if [ -z "$pkgname" ]; then
                   pkgname=$(get_field "PackageName")
               fi
               if [ -z "$pkgname" ]; then
-                  # 从路径中提取文件名（去掉 .metadata 后缀且不包含目录）
                   pkgname=$(basename -- "$metafile" .metadata | iconv -t GBK//IGNORE)
               fi
               
               version=$(get_field "Version")
               os_info=$(get_field "OS")
-              profile=$(get_field "ProFile") # 这里可以根据需要改为 ProFile 或 ProFile_En
+              profile=$(get_field "ProFile")
               inst_dir=$(get_field "InstallDir")
 
               # 保底处理
               [ -z "$version" ] && version="0.0.0"
               [ -z "$os_info" ] && os_info="XP"
-              # "暂无描述" 需要转为 GBK
               [ -z "$profile" ] && profile=$(echo "暂无描述" | iconv -f UTF-8 -t GBK)
-              [ -z "$inst_dir" ] && inst_dir="\"\""
+              [ -z "$inst_dir" ] && inst_dir=""
 
-              # 写入临时文件 (此时变量全是 GBK 字节流)
+              # 写入临时文件
               printf "%s | %s | %s | %s | %s\r\n" "$pkgname" "$version" "$os_info" "$profile" "$inst_dir" >> "$TEMP_FILE"
+              
+              # 清理临时解压目录
+              rm -rf "$PKG_DIR"
           done
 
-          # 4. 排序 (LC_ALL=C 关键：按原始字节排序，不检查 UTF-8 有效性)
+          # 4. 排序
           LC_ALL=C sort -V "$TEMP_FILE" -o "$OUTPUT_FILE"
 
           # 5. 生成统计文件
@@ -74,6 +89,7 @@ jobs:
 
           echo "Database update complete. Processed $count packages (GBK Mode)."
           rm -f $TEMP_FILE
+          rm -rf $EXTRACT_DIR
 
       - name: Commit and Push Changes
         run: |
@@ -85,6 +101,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Auto: Update GBK database (pkgname from InstallerName)"
+            git commit -m "Auto: Update GBK database (metadata.sque from sources/*/*.metadata)"
             git push
           fi
