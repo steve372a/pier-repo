@@ -33,34 +33,36 @@ jobs:
           # 3. 遍历 sources/*/*.metadata 压缩包
           find "$PIE_DIR" -mindepth 2 -maxdepth 2 -name "*.metadata" -print0 | while IFS= read -r -d '' metafile; do
               
-              # 为每个包创建独立的解压目录
               PKG_DIR="$EXTRACT_DIR/$(basename "$metafile" .metadata)"
               mkdir -p "$PKG_DIR"
               
-              # 解压 .metadata 压缩包
               unzip -q "$metafile" -d "$PKG_DIR" 2>/dev/null || continue
               
-              # 读取 metadata.sque
               METADATA_SQUE="$PKG_DIR/metadata.sque"
               if [ ! -f "$METADATA_SQUE" ]; then
                   echo "Warning: metadata.sque not found in $metafile" >&2
                   continue
               fi
               
-              # 字段提取函数（保持原逻辑：GBK 编码）
+              # 字段提取函数：智能识别编码
               get_field() {
-                  iconv -f GBK -t UTF-8//IGNORE "$METADATA_SQUE" | sed -n "/\[$1\]/{n;p;}" | tr -d '\r' | xargs | iconv -f UTF-8 -t GBK//IGNORE
+                  local key=$1
+                  # 提取目标行的下一行内容
+                  local raw_val=$(sed -n "/\[$key\]/{n;p;}" "$METADATA_SQUE" | tr -d '\r' | xargs)
+                  
+                  # 验证是否为合法 UTF-8
+                  if echo "$raw_val" | iconv -f UTF-8 -t UTF-8 >/dev/null 2>&1; then
+                      echo "$raw_val"
+                  else
+                      # 如果不是 UTF-8，则尝试从 GBK 转换
+                      echo "$raw_val" | iconv -f GBK -t UTF-8//IGNORE
+                  fi
               }
 
               # 获取字段
               pkgname=$(get_field "InstallerName")
-              
-              if [ -z "$pkgname" ]; then
-                  pkgname=$(get_field "PackageName")
-              fi
-              if [ -z "$pkgname" ]; then
-                  pkgname=$(basename -- "$metafile" .metadata | iconv -t GBK//IGNORE)
-              fi
+              [ -z "$pkgname" ] && pkgname=$(get_field "PackageName")
+              [ -z "$pkgname" ] && pkgname=$(basename -- "$metafile" .metadata)
               
               version=$(get_field "Version")
               os_info=$(get_field "OS")
@@ -70,13 +72,12 @@ jobs:
               # 保底处理
               [ -z "$version" ] && version="0.0.0"
               [ -z "$os_info" ] && os_info="XP"
-              [ -z "$profile" ] && profile=$(echo "暂无描述" | iconv -f UTF-8 -t GBK)
+              [ -z "$profile" ] && profile="暂无描述"
               [ -z "$inst_dir" ] && inst_dir=""
 
-              # 写入临时文件
-              printf "%s | %s | %s | %s | %s\r\n" "$pkgname" "$version" "$os_info" "$profile" "$inst_dir" >> "$TEMP_FILE"
+              # 写入临时文件 (UTF-8 格式)
+              printf "%s | %s | %s | %s | %s\n" "$pkgname" "$version" "$os_info" "$profile" "$inst_dir" >> "$TEMP_FILE"
               
-              # 清理临时解压目录
               rm -rf "$PKG_DIR"
           done
 
@@ -87,7 +88,7 @@ jobs:
           count=$(wc -l < "$OUTPUT_FILE")
           printf "%d" "$count" > "$DBM_FILE"
 
-          echo "Database update complete. Processed $count packages (GBK Mode)."
+          echo "Database update complete. Processed $count packages (UTF-8 Mode)."
           rm -f $TEMP_FILE
           rm -rf $EXTRACT_DIR
 
@@ -101,6 +102,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Auto: Update GBK database (metadata.sque from sources/*/*.metadata)"
+            git commit -m "Auto: Update UTF-8 database (Smart encoding detection)"
             git push
           fi
