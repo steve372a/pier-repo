@@ -30,10 +30,10 @@ jobs:
           mkdir -p $EXTRACT_DIR
           touch $TEMP_FILE
 
-          # 3. 遍历 sources/*/*.metadata 压缩包
-          find "$PIE_DIR" -mindepth 2 -maxdepth 2 -name "*.metadata" -print0 | while IFS= read -r -d '' metafile; do
+          # 3. 遍历 sources/*/*/latest.metadata 文件
+          find "$PIE_DIR" -mindepth 3 -maxdepth 3 -name "latest.metadata" -print0 | while IFS= read -r -d '' metafile; do
               
-              PKG_DIR="$EXTRACT_DIR/$(basename "$metafile" .metadata)"
+              PKG_DIR="$EXTRACT_DIR/$(basename "$(dirname "$metafile")")"
               mkdir -p "$PKG_DIR"
               
               unzip -q "$metafile" -d "$PKG_DIR" 2>/dev/null || continue
@@ -62,7 +62,7 @@ jobs:
               # 获取字段
               pkgname=$(get_field "InstallerName")
               [ -z "$pkgname" ] && pkgname=$(get_field "PackageName")
-              [ -z "$pkgname" ] && pkgname=$(basename -- "$metafile" .metadata)
+              [ -z "$pkgname" ] && pkgname=$(basename -- "$(dirname "$metafile")")
               
               version=$(get_field "Version")
               os_info=$(get_field "OS")
