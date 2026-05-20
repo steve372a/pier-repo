@@ -66,11 +66,27 @@ jobs:
             }
 
             const filePath = `alias/${firstLetter}/${username}/${installerName}.sque`;
+            const prBody = `## Alias Submission
+
+            Auto-generated from Issue #${context.issue.number}.
+
+            | Field | Value |
+            |------|-----|
+            | Username | \`${username}\` |
+            | InstallerName | \`${installerName}\` |
+            | File path | \`${filePath}\` |
+
+            ### Generated \`.sque\`
+
+            \`\`\`ini
+            ${content}
+            \`\`\``;
 
             core.setOutput('file_path', filePath);
             core.setOutput('file_content', content);
             core.setOutput('username', username);
             core.setOutput('installer_name', installerName);
+            core.setOutput('pr_body', prBody);
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -103,18 +119,7 @@ jobs:
         with:
           commit-message: "Add alias: ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
           title: "Add alias: ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
-          body: |
-            ## Alias Submission
-
-            Auto-generated from Issue #${{ github.event.issue.number }}.
-
-            | Field | Value |
-            |------|-----|
-            | Username | `${{ steps.parse.outputs.username }}` |
-            | InstallerName | `${{ steps.parse.outputs.installer_name }}` |
-            | File path | `${{ steps.parse.outputs.file_path }}` |
-
-            Pier usage: `pier o ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}`
+          body: ${{ steps.parse.outputs.pr_body }}
           branch: "alias/${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
           delete-branch: true
 
