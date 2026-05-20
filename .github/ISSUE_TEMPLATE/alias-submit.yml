@@ -46,7 +46,7 @@ body:
       description: "自定义命令别名，格式为 `alias: program arguments`。"
       placeholder: |
         connect: adb.exe connect
-        install: adb.exe install
+        i386: qemu-system-i386.exe -hda $1 -cdrom $2 -vnc :$3
 
   - type: markdown
     attributes:
