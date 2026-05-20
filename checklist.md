@@ -1,0 +1,25 @@
+# Pier Repo 页面改造检查清单
+
+- [ ] `Packages` 与 `Package Details` 标题按语言切换，不再中文界面下仍显示英文
+- [ ] 页面主色改成白底、简洁样式
+- [ ] 包列表默认显示全部包
+- [ ] 列表项显示 `PackageName`、`InstallerName`、`Version`、简介
+- [ ] 点击列表项后显示详情
+- [ ] 详情大标题显示 `PackageName`
+- [ ] 详情小标题显示简介 `ProFile`
+- [ ] 详情显示 `InstallerName`
+- [ ] 详情显示 `Version`
+- [ ] 详情显示 `OS`
+- [ ] 详情显示 `Author`
+- [ ] 详情显示 `Distributor`
+- [ ] 详情显示 `PackageSize`
+- [ ] 详情显示 `DefaultOpen`
+- [ ] 详情显示 `Alias`
+- [ ] 详情显示 `Notice`
+- [ ] 不显示 `InstallDir`
+- [ ] Alias 以可读格式展示
+- [ ] `DefaultOpen` 以列表格式展示
+- [ ] `profile.sque` 的多语言简介能进入 `packages.json`
+- [ ] `notice.sque` 的多语言 Notice 能进入 `packages.json`
+- [ ] `metadata.sque` 的原字段仍保留在 `packages.json`，用于回退
+- [ ] `db.sque` / `dbm.sque` 继续生成

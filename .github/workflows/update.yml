@@ -69,26 +69,99 @@ jobs:
                       return stripped
               return ""
 
+          def strip_end_marker(value: str) -> str:
+              lines = []
+              for line in value.splitlines():
+                  if line.strip() == "::end":
+                      break
+                  lines.append(line)
+              return "\n".join(lines).strip()
+
+          def parse_locale_fields(text: str) -> dict[str, dict[str, str]]:
+              locales = {}
+              for locale, block in parse_sections(text).items():
+                  fields = {}
+                  current_key = None
+                  buffer: list[str] = []
+
+                  def flush() -> None:
+                      nonlocal current_key, buffer
+                      if current_key is None:
+                          return
+                      fields[current_key] = "\n".join(buffer).strip()
+
+                  for raw_line in block.splitlines():
+                      line = raw_line.rstrip()
+                      if not line or line.strip() == "::end":
+                          continue
+                      if ":" in line:
+                          key, value = line.split(":", 1)
+                          if re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", key.strip()):
+                              flush()
+                              current_key = key.strip()
+                              buffer = [value.strip()]
+                              continue
+                      if current_key is not None:
+                          buffer.append(line)
+
+                  flush()
+                  locales[locale] = fields
+              return locales
+
+          def parse_notice_locales(text: str) -> dict[str, str]:
+              return {
+                  locale: strip_end_marker(block)
+                  for locale, block in parse_sections(text).items()
+              }
+
+          def parse_aliases(value: str) -> list[dict[str, str]]:
+              aliases = []
+              for line in strip_end_marker(value).splitlines():
+                  stripped = line.strip()
+                  if not stripped or ":" not in stripped:
+                      continue
+                  name, command = stripped.split(":", 1)
+                  aliases.append({
+                      "name": name.strip(),
+                      "command": command.strip(),
+                  })
+              return aliases
+
+          def parse_multiline_list(value: str) -> list[str]:
+              return [
+                  line.strip()
+                  for line in strip_end_marker(value).splitlines()
+                  if line.strip()
+              ]
+
           packages = []
           db_lines = []
 
           for metafile in sorted(PIE_DIR.glob("*/*/latest.metadata")):
               try:
                   with zipfile.ZipFile(metafile) as archive:
-                      metadata_name = next(
-                          (name for name in archive.namelist() if name.endswith("metadata.sque")),
-                          None,
-                      )
+                      names = archive.namelist()
+                      metadata_name = next((name for name in names if name.endswith("metadata.sque")), None)
+                      profile_name = next((name for name in names if name.endswith("profile.sque")), None)
+                      notice_name = next((name for name in names if name.endswith("notice.sque")), None)
+
                       if metadata_name is None:
                           print(f"Warning: metadata.sque not found in {metafile}")
                           continue
+
                       metadata_text = decode_bytes(archive.read(metadata_name))
+                      profile_text = decode_bytes(archive.read(profile_name)) if profile_name else ""
+                      notice_text = decode_bytes(archive.read(notice_name)) if notice_name else ""
               except zipfile.BadZipFile:
                   print(f"Warning: invalid metadata zip: {metafile}")
                   continue
 
               normalized_text = metadata_text.replace("\r\n", "\n").replace("\r", "\n").strip()
+              normalized_profile_text = profile_text.replace("\r\n", "\n").replace("\r", "\n").strip()
+              normalized_notice_text = notice_text.replace("\r\n", "\n").replace("\r", "\n").strip()
               sections = parse_sections(normalized_text)
+              profile_locales = parse_locale_fields(normalized_profile_text) if normalized_profile_text else {}
+              notice_locales = parse_notice_locales(normalized_notice_text) if normalized_notice_text else {}
 
               package_dir = metafile.parent.name
               installer_name = first_value(sections, "InstallerName") or package_dir
@@ -96,7 +169,23 @@ jobs:
               version = first_value(sections, "Version") or "0.0.0"
               os_info = first_value(sections, "OS") or "XP"
               profile = first_value(sections, "ProFile") or "暂无描述"
-              install_dir = first_value(sections, "InstallDir")
+              author = first_value(sections, "Author")
+              distributor = first_value(sections, "Distributor")
+              package_size = first_value(sections, "PackageSize")
+              default_open = parse_multiline_list(sections.get("DefaultOpen", ""))
+              aliases = parse_aliases(sections.get("Alias", ""))
+              metadata_notice = strip_end_marker(sections.get("Notice", ""))
+
+              localized_names = {
+                  locale: fields["PackageName"]
+                  for locale, fields in profile_locales.items()
+                  if fields.get("PackageName")
+              }
+              localized_profiles = {
+                  locale: fields["ProFile"]
+                  for locale, fields in profile_locales.items()
+                  if fields.get("ProFile")
+              }
 
               package = {
                   "id": installer_name,
@@ -104,14 +193,23 @@ jobs:
                   "version": version,
                   "os": os_info,
                   "profile": profile,
-                  "installDir": install_dir,
-                  "metadataPath": metafile.as_posix(),
-                  "metadataText": normalized_text,
+                  "author": author,
+                  "distributor": distributor,
+                  "packageSize": package_size,
+                  "defaultOpen": default_open,
+                  "aliases": aliases,
+                  "notice": metadata_notice,
+                  "localizedNames": localized_names,
+                  "profiles": localized_profiles,
+                  "notices": notice_locales,
                   "metadataFields": sections,
+                  "metadataText": normalized_text,
+                  "profileText": normalized_profile_text,
+                  "noticeText": normalized_notice_text,
               }
               packages.append(package)
               db_lines.append(
-                  f"{installer_name} | {version} | {os_info} | {profile} | {install_dir}"
+                  f"{installer_name} | {version} | {os_info} | {profile} | "
               )
 
           packages.sort(key=lambda item: (item["id"].casefold(), item["version"]))

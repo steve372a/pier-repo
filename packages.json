@@ -5,9 +5,63 @@
     "version": "26.00",
     "os": "XP",
     "profile": "7-Zip is a file compression software for the Windows operating system.",
-    "installDir": "",
-    "metadataPath": "sources/7/7zip/latest.metadata",
-    "metadataText": "[PackageName]\n7-Zip\n\n[Version]\n26.00\n\n[OS]\nXP\n\n[InstallerName]\n7zip\n\n[URL]\nx86: 7zip-{version}.pie (default)\nx64: 7zip-x64-{version}.pie\n::end\n\n[ProFile]\n7-Zip is a file compression software for the Windows operating system.\n\n[DefaultOpen]\n7zFM.exe\n::end\n\n[Alias]\nzip: 7z.exe a -tzip $1 $2\n7z: 7z.exe a -t7z $1 $2\ngz: 7z.exe a -tgzip $1 $2\nxz: 7z.exe a -txz $1 $2\nunzip: 7z.exe x $1 -o$2\n::end\n\n[Author]\nIgor Pavlov.\n\n[Distributor]\nSanakaprix\n\n[PackageSize]\n4.14 MB\n\n[Notice]\nGNU LGPL with BSD 3-clause and unRAR restrictions.\nSee LICENSE.txt in software directory.",
+    "author": "Igor Pavlov.",
+    "distributor": "Sanakaprix",
+    "packageSize": "4.14 MB",
+    "defaultOpen": [
+      "7zFM.exe"
+    ],
+    "aliases": [
+      {
+        "name": "zip",
+        "command": "7z.exe a -tzip $1 $2"
+      },
+      {
+        "name": "7z",
+        "command": "7z.exe a -t7z $1 $2"
+      },
+      {
+        "name": "gz",
+        "command": "7z.exe a -tgzip $1 $2"
+      },
+      {
+        "name": "xz",
+        "command": "7z.exe a -txz $1 $2"
+      },
+      {
+        "name": "unzip",
+        "command": "7z.exe x $1 -o$2"
+      }
+    ],
+    "notice": "GNU LGPL with BSD 3-clause and unRAR restrictions.\nSee LICENSE.txt in software directory.",
+    "localizedNames": {},
+    "profiles": {
+      "ja-JP": "7-Zip は Windows システム向けのファイル圧縮ソフトです。",
+      "en-US": "7-Zip is a file archiver for Windows.",
+      "zh-TW": "7-Zip 是適用於 Windows 系統的檔案壓縮軟體。",
+      "zh-CN": "7-Zip 是适用于 Windows 系统的压缩软件。",
+      "ko-KR": "7-Zip은 Windows 시스템용 파일 압축 소프트웨어입니다.",
+      "es-ES": "7-Zip es un software de compresión de archivos para sistemas Windows.",
+      "fr-FR": "7-Zip est un logiciel de compression de fichiers pour les systèmes Windows.",
+      "de-DE": "7-Zip ist ein Dateikompressionsprogramm für Windows-Systeme.",
+      "pt-BR": "7-Zip é um software de compactação de arquivos para sistemas Windows.",
+      "ru-RU": "7-Zip — это программа для сжатия файлов для систем Windows.",
+      "it-IT": "7-Zip è un software di compressione di file per sistemi Windows.",
+      "pl-PL": "7-Zip to oprogramowanie do kompresji plików dla systemów Windows.",
+      "tr-TR": "7-Zip, Windows sistemleri için bir dosya sıkıştırma yazılımıdır."
+    },
+    "notices": {
+      "zh-CN": "遵循 GNU 宽通用公共许可证（LGPL）、\nBSD 3 条款许可证及 unRAR 限制条款。详见软件目录下的 LICENSE.txt 文件。",
+      "ja-JP": "GNU LGPL、BSD 3 条項ライセンス、および unRAR の制限が適用されます。\nソフトウェアディレクトリ内の LICENSE.txt を参照してください。",
+      "zh-TW": "遵循 GNU 寬通用公共許可證（LGPL）、\nBSD 3 條款許可證及 unRAR 限制條款。詳見軟體目錄下的 LICENSE.txt 檔案。",
+      "ko-KR": "GNU LGPL, BSD 3조항 라이선스 및 unRAR 제한 조항을 따릅니다.\n소프트웨어 디렉토리의 LICENSE.txt 파일을 참조하십시오.",
+      "es-ES": "Sujeto a la GNU LGPL, la licencia BSD de 3 cláusulas y las restricciones de unRAR.\nConsulte el archivo LICENSE.txt en el directorio del software.",
+      "fr-FR": "Soumis à la GNU LGPL, à la licence BSD 3 clauses et aux restrictions d'unRAR.\nVoir le fichier LICENSE.txt dans le répertoire du logiciel.",
+      "de-DE": "Unterliegt der GNU LGPL, der BSD 3-Klausel-Lizenz und den unRAR-Einschränkungen.\nSiehe LICENSE.txt im Softwareverzeichnis.",
+      "pt-BR": "Sujeito à GNU LGPL, à licença BSD de 3 cláusulas e às restrições do unRAR.\nConsulte o arquivo LICENSE.txt no diretório do software.",
+      "ru-RU": "Подлежит условиям GNU LGPL, лицензии BSD с 3 пунктами и ограничениям unRAR.\nСм. файл LICENSE.txt в каталоге программы.",
+      "it-IT": "Soggetto alla GNU LGPL, alla licenza BSD a 3 clausole e alle restrizioni di unRAR.\nConsultare il file LICENSE.txt nella directory del software."
+    },
     "metadataFields": {
       "PackageName": "7-Zip",
       "Version": "26.00",
@@ -21,7 +75,10 @@
       "Distributor": "Sanakaprix",
       "PackageSize": "4.14 MB",
       "Notice": "GNU LGPL with BSD 3-clause and unRAR restrictions.\nSee LICENSE.txt in software directory."
-    }
+    },
+    "metadataText": "[PackageName]\n7-Zip\n\n[Version]\n26.00\n\n[OS]\nXP\n\n[InstallerName]\n7zip\n\n[URL]\nx86: 7zip-{version}.pie (default)\nx64: 7zip-x64-{version}.pie\n::end\n\n[ProFile]\n7-Zip is a file compression software for the Windows operating system.\n\n[DefaultOpen]\n7zFM.exe\n::end\n\n[Alias]\nzip: 7z.exe a -tzip $1 $2\n7z: 7z.exe a -t7z $1 $2\ngz: 7z.exe a -tgzip $1 $2\nxz: 7z.exe a -txz $1 $2\nunzip: 7z.exe x $1 -o$2\n::end\n\n[Author]\nIgor Pavlov.\n\n[Distributor]\nSanakaprix\n\n[PackageSize]\n4.14 MB\n\n[Notice]\nGNU LGPL with BSD 3-clause and unRAR restrictions.\nSee LICENSE.txt in software directory.",
+    "profileText": "# Language contributors: Sanakaprix,  ...\n# Pip thanks you all!\n\n[ja-JP]\nProFile: 7-Zip は Windows システム向けのファイル圧縮ソフトです。\n\n[en-US]\nProFile: 7-Zip is a file archiver for Windows.\n\n[zh-TW]\nProFile: 7-Zip 是適用於 Windows 系統的檔案壓縮軟體。\n\n[zh-CN]\nProFile: 7-Zip 是适用于 Windows 系统的压缩软件。\n\n[ko-KR]\nProFile: 7-Zip은 Windows 시스템용 파일 압축 소프트웨어입니다.\n\n[es-ES]\nProFile: 7-Zip es un software de compresión de archivos para sistemas Windows.\n\n[fr-FR]\nProFile: 7-Zip est un logiciel de compression de fichiers pour les systèmes Windows.\n\n[de-DE]\nProFile: 7-Zip ist ein Dateikompressionsprogramm für Windows-Systeme.\n\n[pt-BR]\nProFile: 7-Zip é um software de compactação de arquivos para sistemas Windows.\n\n[ru-RU]\nProFile: 7-Zip — это программа для сжатия файлов для систем Windows.\n\n[it-IT]\nProFile: 7-Zip è un software di compressione di file per sistemi Windows.\n\n[pl-PL]\nProFile: 7-Zip to oprogramowanie do kompresji plików dla systemów Windows.\n\n[tr-TR]\nProFile: 7-Zip, Windows sistemleri için bir dosya sıkıştırma yazılımıdır.",
+    "noticeText": "# Language contributors: Sanakaprix,  ...\n# Pip thanks you all!\n\n[zh-CN]\n遵循 GNU 宽通用公共许可证（LGPL）、\nBSD 3 条款许可证及 unRAR 限制条款。详见软件目录下的 LICENSE.txt 文件。\n::end\n\n[ja-JP]\nGNU LGPL、BSD 3 条項ライセンス、および unRAR の制限が適用されます。\nソフトウェアディレクトリ内の LICENSE.txt を参照してください。\n::end\n\n[zh-TW]\n遵循 GNU 寬通用公共許可證（LGPL）、\nBSD 3 條款許可證及 unRAR 限制條款。詳見軟體目錄下的 LICENSE.txt 檔案。\n::end\n\n[ko-KR]\nGNU LGPL, BSD 3조항 라이선스 및 unRAR 제한 조항을 따릅니다.\n소프트웨어 디렉토리의 LICENSE.txt 파일을 참조하십시오.\n::end\n\n[es-ES]\nSujeto a la GNU LGPL, la licencia BSD de 3 cláusulas y las restricciones de unRAR.\nConsulte el archivo LICENSE.txt en el directorio del software.\n::end\n\n[fr-FR]\nSoumis à la GNU LGPL, à la licence BSD 3 clauses et aux restrictions d'unRAR.\nVoir le fichier LICENSE.txt dans le répertoire du logiciel.\n::end\n\n[de-DE]\nUnterliegt der GNU LGPL, der BSD 3-Klausel-Lizenz und den unRAR-Einschränkungen.\nSiehe LICENSE.txt im Softwareverzeichnis.\n::end\n\n[pt-BR]\nSujeito à GNU LGPL, à licença BSD de 3 cláusulas e às restrições do unRAR.\nConsulte o arquivo LICENSE.txt no diretório do software.\n::end\n\n[ru-RU]\nПодлежит условиям GNU LGPL, лицензии BSD с 3 пунктами и ограничениям unRAR.\nСм. файл LICENSE.txt в каталоге программы.\n::end\n\n[it-IT]\nSoggetto alla GNU LGPL, alla licenza BSD a 3 clausole e alle restrizioni di unRAR.\nConsultare il file LICENSE.txt nella directory del software.\n::end"
   },
   {
     "id": "czadb",
@@ -29,9 +86,24 @@
     "version": "4.2.3",
     "os": "8.1",
     "profile": "Easy-to-Use ADB Management Tool",
-    "installDir": "",
-    "metadataPath": "sources/c/czadb/latest.metadata",
-    "metadataText": "[PackageName]\nczawa ADB Tools\n\n[Version]\n4.2.3\n\n[OS]\n8.1\n\n[InstallerName]\nczadb\n\n[URL]\nczadb-{version}.pie\n\n[ProFile]\nEasy-to-Use ADB Management Tool\n\n[DesktopShortcut]\n\\ADBTOOLS.lnk\n\n[DefaultOpen]\nADBTOOLS_4.2.3\nADBTOOLS_*\n::end\n\n[Alias]\n::end\n\n[Author]\nczawa\n\n[Distributor]\nSanakaprix\n\n[PackageSize]\n12.4 MB\n\n[Notice]\nThis package contains the adb tool from the $brightyellow$Android SDK Platform Tools.\nadb is part of the$brightyellow$ Android Open Source Project (AOSP) $white$and is licensed under the Apache License 2.0.\nFor details, refer to the NOTICE and LICENSE files in the software directory.",
+    "author": "czawa",
+    "distributor": "Sanakaprix",
+    "packageSize": "12.4 MB",
+    "defaultOpen": [
+      "ADBTOOLS_4.2.3",
+      "ADBTOOLS_*"
+    ],
+    "aliases": [],
+    "notice": "This package contains the adb tool from the $brightyellow$Android SDK Platform Tools.\nadb is part of the$brightyellow$ Android Open Source Project (AOSP) $white$and is licensed under the Apache License 2.0.\nFor details, refer to the NOTICE and LICENSE files in the software directory.",
+    "localizedNames": {
+      "zh-CN": "czawa ADB 工具"
+    },
+    "profiles": {
+      "zh-CN": "简单好用的 ADB 工具"
+    },
+    "notices": {
+      "zh-CN": "本软件包包含 $brightyellow$Android SDK Platform Tools$white$ 中的 adb 工具。\nadb 是 $brightyellow$Android 开源项目 (AOSP) $white$的一部分，采用 Apache License 2.0。\n详见软件目录下的 NOTICE 和 LICENSE 文件。"
+    },
     "metadataFields": {
       "PackageName": "czawa ADB Tools",
       "Version": "4.2.3",
@@ -46,6 +118,9 @@
       "Distributor": "Sanakaprix",
       "PackageSize": "12.4 MB",
       "Notice": "This package contains the adb tool from the $brightyellow$Android SDK Platform Tools.\nadb is part of the$brightyellow$ Android Open Source Project (AOSP) $white$and is licensed under the Apache License 2.0.\nFor details, refer to the NOTICE and LICENSE files in the software directory."
-    }
+    },
+    "metadataText": "[PackageName]\nczawa ADB Tools\n\n[Version]\n4.2.3\n\n[OS]\n8.1\n\n[InstallerName]\nczadb\n\n[URL]\nczadb-{version}.pie\n\n[ProFile]\nEasy-to-Use ADB Management Tool\n\n[DesktopShortcut]\n\\ADBTOOLS.lnk\n\n[DefaultOpen]\nADBTOOLS_4.2.3\nADBTOOLS_*\n::end\n\n[Alias]\n::end\n\n[Author]\nczawa\n\n[Distributor]\nSanakaprix\n\n[PackageSize]\n12.4 MB\n\n[Notice]\nThis package contains the adb tool from the $brightyellow$Android SDK Platform Tools.\nadb is part of the$brightyellow$ Android Open Source Project (AOSP) $white$and is licensed under the Apache License 2.0.\nFor details, refer to the NOTICE and LICENSE files in the software directory.",
+    "profileText": "[zh-CN]\nPackageName: czawa ADB 工具\nProFile: 简单好用的 ADB 工具",
+    "noticeText": "[zh-CN]\n本软件包包含 $brightyellow$Android SDK Platform Tools$white$ 中的 adb 工具。\nadb 是 $brightyellow$Android 开源项目 (AOSP) $white$的一部分，采用 Apache License 2.0。\n详见软件目录下的 NOTICE 和 LICENSE 文件。"
   }
 ]

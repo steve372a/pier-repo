@@ -3,303 +3,318 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pier Repo - Package Browser</title>
+    <title>Pier Repo</title>
     <style>
         :root {
-            --bg: #f4f1ea;
-            --panel: #fffdf8;
-            --panel-strong: #f8f2e6;
-            --border: #d7c9ab;
-            --text: #22201b;
-            --muted: #726756;
-            --accent: #9a3412;
-            --accent-soft: #f2dfd3;
-            --code-bg: #1d1d1b;
-            --code-text: #f5efe2;
-            --shadow: 0 18px 50px rgba(71, 54, 25, 0.08);
+            --bg: #f6f6f4;
+            --panel: #ffffff;
+            --border: #e7e5df;
+            --text: #1f1f1c;
+            --muted: #6d6a63;
+            --accent: #1d4ed8;
+            --accent-soft: #eff6ff;
+            --tag: #f3f4f6;
+            --shadow: 0 10px 30px rgba(18, 18, 18, 0.05);
         }
 
         * { box-sizing: border-box; }
 
         body {
             margin: 0;
-            font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
-            background:
-                radial-gradient(circle at top left, rgba(154, 52, 18, 0.12), transparent 28%),
-                linear-gradient(180deg, #faf7f1 0%, var(--bg) 100%);
+            background: var(--bg);
             color: var(--text);
+            font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
         }
 
-        .shell {
-            max-width: 1240px;
+        .page {
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 32px 20px 48px;
+            padding: 28px 18px 40px;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
+            gap: 16px;
             align-items: flex-start;
-            gap: 20px;
-            margin-bottom: 24px;
+            margin-bottom: 22px;
         }
 
-        .title-wrap h1 {
+        .header h1 {
             margin: 0;
-            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-size: clamp(2rem, 4vw, 2.8rem);
             line-height: 1;
-            letter-spacing: -0.04em;
+            letter-spacing: -0.03em;
         }
 
-        .title-wrap p {
+        .header p {
             margin: 10px 0 0;
-            max-width: 760px;
             color: var(--muted);
-            font-size: 1rem;
+            max-width: 780px;
         }
 
-        .lang-switch {
+        .lang-button {
             border: 1px solid var(--border);
             background: var(--panel);
-            color: var(--accent);
-            padding: 10px 14px;
             border-radius: 999px;
+            padding: 10px 14px;
             cursor: pointer;
-            white-space: nowrap;
-            font: inherit;
-        }
-
-        .lang-switch:hover {
-            background: var(--accent-soft);
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 14px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 16px 18px;
+            color: var(--text);
             box-shadow: var(--shadow);
         }
 
-        .stat-card .label {
+        .topbar {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .topcard {
+            padding: 16px 18px;
+        }
+
+        .topcard span {
             display: block;
             color: var(--muted);
             font-size: 0.92rem;
             margin-bottom: 8px;
         }
 
-        .stat-card strong,
-        .stat-card a {
-            font-size: 1.15rem;
+        .topcard strong,
+        .topcard a {
             color: var(--text);
+            font-size: 1.12rem;
             text-decoration: none;
         }
 
-        .stat-card a:hover {
-            color: var(--accent);
-        }
-
-        .search-bar {
-            margin-bottom: 18px;
+        .search-wrap {
+            margin-bottom: 16px;
         }
 
         #search-input {
             width: 100%;
+            padding: 15px 16px;
+            border-radius: 16px;
             border: 1px solid var(--border);
-            background: rgba(255, 253, 248, 0.92);
-            border-radius: 18px;
-            padding: 16px 18px;
+            background: var(--panel);
+            color: var(--text);
             font: inherit;
             font-size: 1rem;
-            color: var(--text);
             box-shadow: var(--shadow);
         }
 
         .layout {
             display: grid;
-            grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
-            gap: 18px;
-            align-items: start;
+            grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+            gap: 16px;
         }
 
-        .panel {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            box-shadow: var(--shadow);
+        .section-head {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-icon {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+            flex: 0 0 22px;
+        }
+
+        .section-head h2 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .section-head p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.94rem;
+        }
+
+        .list-panel {
+            min-height: 72vh;
             overflow: hidden;
         }
 
-        .panel-head {
-            padding: 16px 18px;
-            border-bottom: 1px solid rgba(215, 201, 171, 0.8);
-            background: linear-gradient(180deg, rgba(242, 223, 211, 0.55), transparent);
-        }
-
-        .panel-head h2 {
-            margin: 0;
-            font-size: 1rem;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-        }
-
-        .panel-head p {
-            margin: 6px 0 0;
-            color: var(--muted);
-            font-size: 0.95rem;
-        }
-
         .package-list {
-            max-height: 68vh;
-            overflow: auto;
             padding: 10px;
+            max-height: calc(72vh - 70px);
+            overflow: auto;
         }
 
         .package-item {
             width: 100%;
             border: 1px solid transparent;
             background: transparent;
-            border-radius: 18px;
-            padding: 14px 14px 13px;
+            border-radius: 14px;
+            padding: 14px;
             text-align: left;
             cursor: pointer;
-            transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
         }
 
         .package-item:hover {
-            transform: translateY(-1px);
+            background: #fafafa;
             border-color: var(--border);
-            background: rgba(242, 223, 211, 0.35);
         }
 
         .package-item.active {
-            border-color: var(--accent);
             background: var(--accent-soft);
+            border-color: #bfdbfe;
         }
 
-        .package-item-title {
+        .package-title {
             display: flex;
-            align-items: baseline;
             justify-content: space-between;
-            gap: 12px;
+            gap: 10px;
+            align-items: baseline;
+            margin-bottom: 4px;
+        }
+
+        .package-title strong {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .package-installer,
+        .package-summary {
+            color: var(--muted);
+            font-size: 0.92rem;
+            margin: 0;
+        }
+
+        .package-installer {
             margin-bottom: 6px;
         }
 
-        .package-item-title strong {
-            font-size: 1.05rem;
-        }
-
-        .package-item-title span {
-            color: var(--muted);
-            font-size: 0.95rem;
-        }
-
-        .package-item p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 0.95rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .detail {
-            min-height: 68vh;
-            display: flex;
-            flex-direction: column;
+        .detail-panel {
+            min-height: 72vh;
         }
 
         .detail-body {
-            padding: 18px;
+            padding: 22px;
             display: grid;
-            gap: 18px;
+            gap: 22px;
         }
 
-        .hero {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-        }
-
-        .hero h3 {
+        .headline h3 {
             margin: 0;
-            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            font-size: clamp(2rem, 4vw, 2.8rem);
             line-height: 1;
         }
 
-        .hero p {
-            margin: 10px 0 0;
+        .headline p {
+            margin: 12px 0 0;
             color: var(--muted);
             font-size: 1rem;
+            line-height: 1.6;
         }
 
-        .pill {
+        .inline-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .chip {
             display: inline-flex;
             align-items: center;
-            padding: 8px 12px;
+            gap: 8px;
+            padding: 10px 12px;
             border-radius: 999px;
-            border: 1px solid var(--border);
-            background: var(--panel-strong);
-            font-size: 0.92rem;
-            white-space: nowrap;
+            background: var(--tag);
+            color: var(--text);
+            font-size: 0.94rem;
         }
 
-        .meta-grid {
+        .chip span {
+            color: var(--muted);
+        }
+
+        .info-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
         }
 
-        .meta-card {
+        .info-box {
             border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 14px;
-            background: rgba(248, 242, 230, 0.6);
+            border-radius: 16px;
+            padding: 14px 15px;
         }
 
-        .meta-card span {
-            display: block;
-            color: var(--muted);
-            font-size: 0.85rem;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
+        .info-box h4,
+        .block h4 {
+            margin: 0 0 8px;
+            font-size: 0.96rem;
         }
 
-        .meta-card strong {
-            display: block;
-            font-size: 1rem;
-            word-break: break-word;
-        }
-
-        .code-block {
-            border-radius: 20px;
-            background: var(--code-bg);
-            color: var(--code-text);
-            overflow: auto;
-        }
-
-        .code-block pre {
+        .info-box p,
+        .block p {
             margin: 0;
-            padding: 18px;
-            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-            font-size: 0.95rem;
-            line-height: 1.55;
+            color: var(--text);
+            line-height: 1.65;
             white-space: pre-wrap;
             word-break: break-word;
         }
 
-        .empty {
-            padding: 36px 22px;
+        .info-box.empty-box p,
+        .block.empty-block p {
+            color: var(--muted);
+        }
+
+        .block {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px;
+            background: #fcfcfb;
+        }
+
+        .alias-list,
+        .default-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .alias-item,
+        .default-item {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: #fff;
+        }
+
+        .alias-item strong,
+        .default-item strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .alias-item code,
+        .default-item code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            font-size: 0.92rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .placeholder {
+            padding: 34px 22px;
             text-align: center;
             color: var(--muted);
         }
@@ -309,84 +324,82 @@
         }
 
         @media (max-width: 920px) {
-            .stats,
+            .topbar,
             .layout,
-            .meta-grid {
+            .info-grid {
                 grid-template-columns: 1fr;
             }
 
-            .header,
-            .hero {
+            .header {
                 flex-direction: column;
             }
 
-            .package-list,
-            .detail {
+            .package-list {
                 max-height: none;
-                min-height: 0;
             }
         }
     </style>
 </head>
 <body>
-    <div class="shell">
+    <div class="page">
         <div class="header">
-            <div class="title-wrap">
+            <div>
                 <h1>Pier Repo</h1>
-                <p class="zh">静态软件源浏览页。左侧列出全部包，点击后直接查看 GitHub Action 预展开的 `metadata.sque` 内容。</p>
-                <p class="en hidden">Static package browser. Select any package to inspect the pre-expanded `metadata.sque` content generated by GitHub Actions.</p>
+                <p class="zh">静态软件源浏览页。GitHub Action 预处理 metadata、profile、notice 后，页面直接显示全部包与详情。</p>
+                <p class="en hidden">Static package browser. GitHub Actions pre-processes metadata, profile, and notice files so the page can render package lists and details directly.</p>
             </div>
-            <button class="lang-switch" type="button" onclick="toggleLang()">English / 中文</button>
+            <button class="lang-button" type="button" onclick="toggleLang()">English / 中文</button>
         </div>
 
-        <div class="stats">
-            <div class="stat-card">
-                <span class="label zh">软件包总数</span>
-                <span class="label en hidden">Total Packages</span>
+        <div class="topbar">
+            <div class="card topcard">
+                <span class="zh">软件包总数</span>
+                <span class="en hidden">Total Packages</span>
                 <strong id="pkg-count">...</strong>
             </div>
-            <div class="stat-card">
-                <span class="label zh">数据索引</span>
-                <span class="label en hidden">Data Index</span>
+            <div class="card topcard">
+                <span class="zh">前端数据</span>
+                <span class="en hidden">Frontend Data</span>
                 <a href="packages.json" target="_blank" rel="noreferrer">packages.json</a>
             </div>
-            <div class="stat-card">
-                <span class="label zh">兼容文件</span>
-                <span class="label en hidden">Compatibility Files</span>
+            <div class="card topcard">
+                <span class="zh">兼容索引</span>
+                <span class="en hidden">Compatibility Index</span>
                 <strong><a href="db.sque" target="_blank" rel="noreferrer">db.sque</a> / <a href="dbm.sque" target="_blank" rel="noreferrer">dbm.sque</a></strong>
             </div>
         </div>
 
-        <div class="search-bar">
-            <input
-                id="search-input"
-                type="text"
-                placeholder="输入包名、版本、简介、OS 进行搜索..."
-                oninput="handleSearch()"
-            >
+        <div class="search-wrap">
+            <input id="search-input" type="text" placeholder="输入包名、安装名、版本、简介搜索..." oninput="handleSearch()">
         </div>
 
         <div class="layout">
-            <section class="panel">
-                <div class="panel-head">
-                    <h2 class="zh">Packages</h2>
-                    <h2 class="en hidden">Packages</h2>
-                    <p class="zh" id="list-status">正在加载索引...</p>
-                    <p class="en hidden" id="list-status-en">Loading index...</p>
+            <section class="card list-panel">
+                <div class="section-head">
+                    <div class="section-title">
+                        <img class="section-icon" src="assets/package.png" alt="Package icon">
+                        <h2 class="zh">软件包列表</h2>
+                        <h2 class="en hidden">Package List</h2>
+                    </div>
+                    <p class="zh" id="list-status-zh">正在加载...</p>
+                    <p class="en hidden" id="list-status-en">Loading...</p>
                 </div>
                 <div class="package-list" id="package-list"></div>
             </section>
 
-            <section class="panel detail" id="detail-panel">
-                <div class="panel-head">
-                    <h2 class="zh">Package Details</h2>
-                    <h2 class="en hidden">Package Details</h2>
-                    <p class="zh">点击左侧包名后显示详细元数据。</p>
-                    <p class="en hidden">Select a package on the left to inspect its metadata.</p>
+            <section class="card detail-panel">
+                <div class="section-head">
+                    <div class="section-title">
+                        <img class="section-icon" src="assets/info.png" alt="Info icon">
+                        <h2 class="zh">包详情</h2>
+                        <h2 class="en hidden">Package Details</h2>
+                    </div>
+                    <p class="zh">点击左侧包项后查看详细信息。</p>
+                    <p class="en hidden">Select a package from the left to inspect its details.</p>
                 </div>
                 <div class="detail-body" id="detail-body">
-                    <div class="empty zh">正在等待数据...</div>
-                    <div class="empty en hidden">Waiting for package data...</div>
+                    <div class="placeholder zh">正在等待数据...</div>
+                    <div class="placeholder en hidden">Waiting for package data...</div>
                 </div>
             </section>
         </div>
@@ -401,7 +414,7 @@
         const packageListEl = document.getElementById('package-list');
         const detailBodyEl = document.getElementById('detail-body');
         const pkgCountEl = document.getElementById('pkg-count');
-        const listStatusZhEl = document.getElementById('list-status');
+        const listStatusZhEl = document.getElementById('list-status-zh');
         const listStatusEnEl = document.getElementById('list-status-en');
         const searchInputEl = document.getElementById('search-input');
 
@@ -430,11 +443,12 @@
                 }
             })
             .catch(error => {
-                packageListEl.innerHTML = `<div class="empty">Error: ${escapeHtml(error.message)}</div>`;
-                detailBodyEl.innerHTML = `<div class="empty">Error: ${escapeHtml(error.message)}</div>`;
+                const safe = escapeHtml(error.message);
+                packageListEl.innerHTML = `<div class="placeholder">Error: ${safe}</div>`;
+                detailBodyEl.innerHTML = `<div class="placeholder">Error: ${safe}</div>`;
+                pkgCountEl.textContent = '0';
                 listStatusZhEl.textContent = '加载失败';
                 listStatusEnEl.textContent = 'Failed to load';
-                pkgCountEl.textContent = '0';
             });
 
         function handleSearch() {
@@ -446,8 +460,12 @@
                     pkg.version,
                     pkg.os,
                     pkg.profile,
-                    pkg.installDir,
-                    pkg.metadataText
+                    pkg.author,
+                    pkg.distributor,
+                    pkg.notice,
+                    JSON.stringify(pkg.aliases || []),
+                    JSON.stringify(pkg.profiles || {}),
+                    JSON.stringify(pkg.notices || {})
                 ].join('\n').toLowerCase();
                 return haystack.includes(term);
             });
@@ -477,6 +495,18 @@
                 || null;
         }
 
+        function currentLocaleKey() {
+            return isEnglish ? 'en-US' : 'zh-CN';
+        }
+
+        function localizedField(map, fallbackValue) {
+            if (!map || typeof map !== 'object') {
+                return fallbackValue || '';
+            }
+            const locale = currentLocaleKey();
+            return map[locale] || map['zh-CN'] || map['en-US'] || fallbackValue || '';
+        }
+
         function updateListStatus() {
             listStatusZhEl.textContent = `显示 ${filteredPackages.length} / ${allPackages.length} 个包`;
             listStatusEnEl.textContent = `Showing ${filteredPackages.length} / ${allPackages.length} packages`;
@@ -484,29 +514,23 @@
 
         function renderList() {
             if (filteredPackages.length === 0) {
-                packageListEl.innerHTML = `
-                    <div class="empty zh">没有匹配到任何包。</div>
-                    <div class="empty en ${isEnglish ? '' : 'hidden'}">No packages matched your search.</div>
-                `;
-                if (!isEnglish) {
-                    packageListEl.querySelector('.en')?.classList.add('hidden');
-                }
+                packageListEl.innerHTML = isEnglish
+                    ? '<div class="placeholder">No packages matched your search.</div>'
+                    : '<div class="placeholder">没有匹配到任何包。</div>';
                 return;
             }
 
             packageListEl.innerHTML = filteredPackages.map(pkg => {
-                const isActive = pkg.id === selectedPackageId;
+                const displayName = localizedField(pkg.localizedNames, pkg.name || pkg.id);
+                const summary = localizedField(pkg.profiles, pkg.profile || '');
                 return `
-                    <button
-                        type="button"
-                        class="package-item ${isActive ? 'active' : ''}"
-                        data-package-id="${escapeHtml(pkg.id)}"
-                    >
-                        <div class="package-item-title">
-                            <strong>${escapeHtml(pkg.id)}</strong>
+                    <button type="button" class="package-item ${pkg.id === selectedPackageId ? 'active' : ''}" data-package-id="${escapeHtml(pkg.id)}">
+                        <div class="package-title">
+                            <strong>${escapeHtml(displayName)}</strong>
                             <span>${escapeHtml(pkg.version || '0.0.0')}</span>
                         </div>
-                        <p>${escapeHtml(pkg.profile || '')}</p>
+                        <p class="package-installer">${escapeHtml(pkg.id)}</p>
+                        <p class="package-summary">${escapeHtml(summary)}</p>
                     </button>
                 `;
             }).join('');
@@ -524,58 +548,87 @@
                 return;
             }
 
+            const displayName = localizedField(pkg.localizedNames, pkg.name || pkg.id);
+            const summary = localizedField(pkg.profiles, pkg.profile || '');
+            const notice = localizedField(pkg.notices, pkg.notice || '');
+            const aliases = Array.isArray(pkg.aliases) ? pkg.aliases : [];
+            const defaultOpen = Array.isArray(pkg.defaultOpen) ? pkg.defaultOpen : [];
+
             detailBodyEl.innerHTML = `
-                <div class="hero">
-                    <div>
-                        <h3>${escapeHtml(pkg.name || pkg.id)}</h3>
-                        <p>${escapeHtml(pkg.profile || '')}</p>
-                    </div>
-                    <div class="pill">${escapeHtml(pkg.id)}</div>
+                <div class="headline">
+                    <h3>${escapeHtml(displayName)}</h3>
+                    <p>${escapeHtml(summary || '-') }</p>
                 </div>
 
-                <div class="meta-grid">
-                    <div class="meta-card">
-                        <span>Version</span>
-                        <strong>${escapeHtml(pkg.version || '0.0.0')}</strong>
-                    </div>
-                    <div class="meta-card">
-                        <span>OS</span>
-                        <strong>${escapeHtml(pkg.os || 'XP')}</strong>
-                    </div>
-                    <div class="meta-card">
-                        <span>InstallDir</span>
-                        <strong>${escapeHtml(pkg.installDir || '-')}</strong>
-                    </div>
-                    <div class="meta-card">
-                        <span>Metadata Path</span>
-                        <strong>${escapeHtml(pkg.metadataPath || '-')}</strong>
-                    </div>
+                <div class="inline-meta">
+                    <div class="chip"><span>${isEnglish ? 'InstallerName' : '包名'}</span><strong>${escapeHtml(pkg.id)}</strong></div>
+                    <div class="chip"><span>${isEnglish ? 'Version' : '版本'}</span><strong>${escapeHtml(pkg.version || '0.0.0')}</strong></div>
                 </div>
 
-                <div>
-                    <h4 class="zh">metadata.sque 原文</h4>
-                    <h4 class="en ${isEnglish ? '' : 'hidden'}">Raw metadata.sque</h4>
-                    <div class="code-block">
-                        <pre>${escapeHtml(pkg.metadataText || '')}</pre>
-                    </div>
+                <div class="info-grid">
+                    ${infoBox(isEnglish ? 'OS' : '系统要求', pkg.os || '-')}
+                    ${infoBox(isEnglish ? 'Author' : '作者', pkg.author || '-')}
+                    ${infoBox(isEnglish ? 'Distributor' : '分发者', pkg.distributor || '-')}
+                    ${infoBox(isEnglish ? 'Size' : '大小', pkg.packageSize || '-')}
+                </div>
+
+                <div class="block ${aliases.length ? '' : 'empty-block'}">
+                    <h4>${isEnglish ? 'Alias' : 'Alias 别名'}</h4>
+                    ${aliases.length ? renderAliases(aliases) : `<p>${isEnglish ? 'No aliases defined.' : '没有定义别名。'}</p>`}
+                </div>
+
+                <div class="block ${defaultOpen.length ? '' : 'empty-block'}">
+                    <h4>${isEnglish ? 'Default Open' : '默认启动'}</h4>
+                    ${defaultOpen.length ? renderDefaultOpen(defaultOpen) : `<p>${isEnglish ? 'No default open entries.' : '没有默认启动项。'}</p>`}
+                </div>
+
+                <div class="block ${notice ? '' : 'empty-block'}">
+                    <h4>Notice</h4>
+                    <p>${escapeHtml(notice || (isEnglish ? 'No notice provided.' : '没有 Notice。'))}</p>
                 </div>
             `;
+        }
 
-            if (!isEnglish) {
-                detailBodyEl.querySelector('.en')?.classList.add('hidden');
-            } else {
-                detailBodyEl.querySelector('.zh')?.classList.add('hidden');
-            }
+        function renderAliases(aliases) {
+            return `
+                <div class="alias-list">
+                    ${aliases.map(alias => `
+                        <div class="alias-item">
+                            <strong>${escapeHtml(alias.name)}</strong>
+                            <code>${formatCommand(alias.command)}</code>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderDefaultOpen(items) {
+            return `
+                <div class="default-list">
+                    ${items.map(item => `
+                        <div class="default-item">
+                            <strong>${escapeHtml(item)}</strong>
+                            <code>${escapeHtml(item)}</code>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function infoBox(title, value) {
+            const empty = !value || value === '-';
+            return `
+                <div class="info-box ${empty ? 'empty-box' : ''}">
+                    <h4>${escapeHtml(title)}</h4>
+                    <p>${escapeHtml(value || '-')}</p>
+                </div>
+            `;
         }
 
         function renderEmptyDetails() {
-            detailBodyEl.innerHTML = `
-                <div class="empty zh">没有可显示的包详情。</div>
-                <div class="empty en ${isEnglish ? '' : 'hidden'}">No package details available.</div>
-            `;
-            if (!isEnglish) {
-                detailBodyEl.querySelector('.en')?.classList.add('hidden');
-            }
+            detailBodyEl.innerHTML = isEnglish
+                ? '<div class="placeholder">No package details available.</div>'
+                : '<div class="placeholder">没有可显示的包详情。</div>';
         }
 
         function toggleLang() {
@@ -583,11 +636,22 @@
             document.querySelectorAll('.zh').forEach(el => el.classList.toggle('hidden', isEnglish));
             document.querySelectorAll('.en').forEach(el => el.classList.toggle('hidden', !isEnglish));
             searchInputEl.placeholder = isEnglish
-                ? 'Search by name, version, profile, OS, or metadata...'
-                : '输入包名、版本、简介、OS 进行搜索...';
+                ? 'Search by package name, installer name, version, or summary...'
+                : '输入包名、安装名、版本、简介搜索...';
             updateListStatus();
             renderList();
-            renderDetails(getPackageById(selectedPackageId));
+            if (selectedPackageId) {
+                renderDetails(getPackageById(selectedPackageId));
+            } else {
+                renderEmptyDetails();
+            }
+        }
+
+        function formatCommand(command) {
+            return escapeHtml(String(command || ''))
+                .replaceAll('$1', '<span style="color:#1d4ed8;font-weight:600;">$1</span>')
+                .replaceAll('$2', '<span style="color:#1d4ed8;font-weight:600;">$2</span>')
+                .replaceAll('$3', '<span style="color:#1d4ed8;font-weight:600;">$3</span>');
         }
 
         function escapeHtml(value) {
