@@ -2,7 +2,7 @@ name: Process Alias Submit
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened, edited, labeled]
 
 permissions:
   contents: write
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   process-alias:
-    if: contains(github.event.issue.labels.*.name, 'alias-submit')
+    if: contains(github.event.issue.labels.*.name, 'alias-submit') || startsWith(github.event.issue.title, '[Alias]')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
