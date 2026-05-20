@@ -1,0 +1,166 @@
+name: Process Alias Submit
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  process-alias:
+    if: contains(github.event.issue.labels.*.name, 'alias-submit')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse issue body
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body;
+
+            // Extract fields from issue form
+            const getField = (label) => {
+              const re = new RegExp(`### ${label}[\\s\\S]*?\\n\\n([\\s\\S]*?)(?=\\n### |\\n---|$)`);
+              const match = body.match(re);
+              return match ? match[1].trim() : '';
+            };
+
+            const username = getField('用户名 / Username');
+            const installerName = getField('InstallerName');
+            const defaultOpen = getField('DefaultOpen（可选）');
+            const aliases = getField('Alias 命令别名（可选）');
+
+            if (!username || !installerName) {
+              core.setFailed('Missing required fields: username or installerName');
+              return;
+            }
+
+            // Validate username (alphanumeric, hyphens, underscores only)
+            if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+              core.setFailed('Invalid username: only letters, numbers, hyphens and underscores allowed');
+              return;
+            }
+
+            // Validate installerName (alphanumeric, hyphens, underscores only)
+            if (!/^[a-zA-Z0-9_-]+$/.test(installerName)) {
+              core.setFailed('Invalid installerName: only letters, numbers, hyphens and underscores allowed');
+              return;
+            }
+
+            // Get first letter of username (lowercase) for directory
+            const firstLetter = username[0].toLowerCase();
+
+            // Build alias file content
+            let content = `[ToUse]\n${installerName}\n\n`;
+
+            if (defaultOpen) {
+              content += `[DefaultOpen]\n${defaultOpen}\n::end\n\n`;
+            } else {
+              content += `[DefaultOpen]\n::end\n\n`;
+            }
+
+            if (aliases) {
+              content += `[Alias]\n${aliases}\n::end\n`;
+            } else {
+              content += `[Alias]\n::end\n`;
+            }
+
+            // File path: alias/<firstLetter>/<username>/<installerName>.sque
+            const filePath = `alias/${firstLetter}/${username}/${installerName}.sque`;
+
+            core.setOutput('file_path', filePath);
+            core.setOutput('file_content', content);
+            core.setOutput('username', username);
+            core.setOutput('installer_name', installerName);
+
+            // Add a comment to the issue
+            const { data: comment } = await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🤖 正在处理别名提交...\n\n路径: \`${filePath}\`\n\n\`\`\`ini\n${content}\n\`\`\``
+            });
+
+      - name: Create alias file and commit
+        id: commit
+        env:
+          FILE_PATH: ${{ steps.parse.outputs.file_path }}
+          FILE_CONTENT: ${{ steps.parse.outputs.file_content }}
+          USERNAME: ${{ steps.parse.outputs.username }}
+          INSTALLER_NAME: ${{ steps.parse.outputs.installer_name }}
+        run: |
+          # Create directory structure
+          mkdir -p "$(dirname "$FILE_PATH")"
+          
+          # Write the alias file
+          echo "$FILE_CONTENT" > "$FILE_PATH"
+          
+          # Check if file already exists in repo
+          if git ls-files --error-unmatch "$FILE_PATH" 2>/dev/null; then
+            echo "file_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "file_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        id: pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "Add alias: ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
+          title: "Add alias: ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
+          body: |
+            ## 别名提交 / Alias Submission
+
+            自动从 Issue #${{ github.event.issue.number }} 生成。
+
+            | 字段 | 值 |
+            |------|-----|
+            | 用户名 | `${{ steps.parse.outputs.username }}` |
+            | InstallerName | `${{ steps.parse.outputs.installer_name }}` |
+            | 文件路径 | `${{ steps.parse.outputs.file_path }}` |
+
+            Pier 客户端用法: `pier o ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}`
+          branch: "alias/${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
+          delete-branch: true
+          labels: alias-pr
+
+      - name: Update issue with PR info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.pull-request-number }};
+            const prUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${prNumber}`;
+            const filePath = `${{ steps.parse.outputs.file_path }}`;
+            const fileExists = `${{ steps.commit.outputs.file_exists }}`;
+
+            let body = `✅ 已创建 PR [#${prNumber}](${prUrl})\n\n`;
+            body += `📁 文件: \`${filePath}\`\n\n`;
+
+            if (fileExists === 'true') {
+              body += `⚠️ **注意**: 该文件在仓库中已存在，PR 将覆盖现有内容。请审核确认。\n\n`;
+            }
+
+            body += `🔍 审核后合并即可生效。`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+            // Add the alias-pr label to the PR
+            if (prNumber) {
+              await github.rest.issues.addLabels({
+                issue_number: prNumber,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['alias-pr']
+              });
+            }
