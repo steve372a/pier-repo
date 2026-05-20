@@ -98,6 +98,7 @@ jobs:
 
       - name: Create Pull Request
         id: pr
+        continue-on-error: true
         uses: peter-evans/create-pull-request@v7
         with:
           commit-message: "Add alias: ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
@@ -116,9 +117,9 @@ jobs:
             Pier usage: `pier o ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}`
           branch: "alias/${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
           delete-branch: true
-          labels: alias-pr
 
       - name: Update issue with PR info
+        if: steps.pr.outcome == 'success' && steps.pr.outputs.pull-request-number != ''
         uses: actions/github-script@v7
         with:
           script: |
@@ -143,11 +144,20 @@ jobs:
               body
             });
 
-            if (prNumber) {
-              await github.rest.issues.addLabels({
-                issue_number: Number(prNumber),
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                labels: ['alias-pr']
-              });
-            }
+      - name: Report PR creation failure
+        if: steps.pr.outcome == 'failure' || steps.pr.outputs.pull-request-number == ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let body = 'The alias file was generated, but no pull request was created.\n\n';
+            body += 'Common causes:\n';
+            body += '- `Settings -> Actions -> General -> Workflow permissions` is not set to allow write access.\n';
+            body += '- `Allow GitHub Actions to create and approve pull requests` is disabled.\n';
+            body += '- There was no diff to commit because the target file already matched the generated content.\n';
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
