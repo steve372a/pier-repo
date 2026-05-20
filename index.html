@@ -313,6 +313,16 @@
             word-break: break-word;
         }
 
+        .markup-brightyellow {
+            color: #a16207;
+            font-weight: 600;
+        }
+
+        .markup-white {
+            color: inherit;
+            font-weight: inherit;
+        }
+
         .placeholder {
             padding: 34px 22px;
             text-align: center;
@@ -530,7 +540,7 @@
                             <span>${escapeHtml(pkg.version || '0.0.0')}</span>
                         </div>
                         <p class="package-installer">${escapeHtml(pkg.id)}</p>
-                        <p class="package-summary">${escapeHtml(summary)}</p>
+                        <p class="package-summary">${escapeHtml(stripMarkup(summary))}</p>
                     </button>
                 `;
             }).join('');
@@ -557,7 +567,7 @@
             detailBodyEl.innerHTML = `
                 <div class="headline">
                     <h3>${escapeHtml(displayName)}</h3>
-                    <p>${escapeHtml(summary || '-') }</p>
+                    <p>${renderMarkup(summary || '-')}</p>
                 </div>
 
                 <div class="inline-meta">
@@ -584,7 +594,7 @@
 
                 <div class="block ${notice ? '' : 'empty-block'}">
                     <h4>Notice</h4>
-                    <p>${escapeHtml(notice || (isEnglish ? 'No notice provided.' : '没有 Notice。'))}</p>
+                    <p>${renderMarkup(notice || (isEnglish ? 'No notice provided.' : '没有 Notice。'))}</p>
                 </div>
             `;
         }
@@ -648,10 +658,32 @@
         }
 
         function formatCommand(command) {
-            return escapeHtml(String(command || ''))
+            return renderMarkup(String(command || ''))
                 .replaceAll('$1', '<span style="color:#1d4ed8;font-weight:600;">$1</span>')
                 .replaceAll('$2', '<span style="color:#1d4ed8;font-weight:600;">$2</span>')
                 .replaceAll('$3', '<span style="color:#1d4ed8;font-weight:600;">$3</span>');
+        }
+
+        function stripMarkup(text) {
+            return String(text || '').replace(/\$[a-zA-Z0-9_-]+\$/g, '');
+        }
+
+        function renderMarkup(text) {
+            const tokens = String(text || '').split(/(\$[a-zA-Z0-9_-]+\$)/g);
+            let activeClass = '';
+            return tokens.map(token => {
+                const marker = token.match(/^\$([a-zA-Z0-9_-]+)\$$/);
+                if (marker) {
+                    const key = marker[1].toLowerCase();
+                    activeClass = key === 'white' ? '' : `markup-${key}`;
+                    return '';
+                }
+                const escaped = escapeHtml(token);
+                if (!activeClass) {
+                    return escaped;
+                }
+                return `<span class="${activeClass}">${escaped}</span>`;
+            }).join('');
         }
 
         function escapeHtml(value) {
