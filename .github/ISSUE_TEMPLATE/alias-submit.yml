@@ -1,4 +1,4 @@
-name: Alias Submit
+name: Alias Submit / 别名模板提交
 description: Submit an alias mapping from user/package to InstallerName.
 title: "[Alias] <username>/<package> -> <InstallerName>"
 labels:
