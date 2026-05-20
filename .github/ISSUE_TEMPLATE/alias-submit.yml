@@ -1,23 +1,23 @@
-name: 别名提交 / Alias Submit
-description: 提交第三方别名映射（user/package → InstallerName）
-title: "[Alias] user/package → InstallerName"
-labels: [alias-submit]
+name: Alias Submit
+description: Submit an alias mapping from user/package to InstallerName.
+title: "[Alias] <username>/<package> -> <InstallerName>"
+labels:
+  - alias-submit
 body:
   - type: markdown
     attributes:
       value: |
-        ## 📦 提交别名映射
+        ## 提交别名映射
 
-        提交后 GitHub Actions 会自动生成 `alias/{首字母}/{user}/{InstallerName}.sque` 文件。
-
-        Pier 客户端通过 `pier o user/InstallerName` 使用。
+        提交后，GitHub Actions 会自动生成 `alias/{首字母}/{user}/{InstallerName}.sque` 文件。
+        合并后即可通过 `pier o user/InstallerName` 使用。
 
   - type: input
     id: username
     attributes:
-      label: 用户名 / Username
-      description: 你的用户名（作为命名空间，如 `sanakaprix`）
-      placeholder: "你的 GitHub 用户名"
+      label: Username
+      description: 你的用户名，作为命名空间使用，例如 `sanakaprix`。
+      placeholder: your-github-name
     validations:
       required: true
 
@@ -25,18 +25,17 @@ body:
     id: installer_name
     attributes:
       label: InstallerName
-      description: 指向的包 InstallerName（已在软件源中存在的包名）
-      placeholder: "czadb"
+      description: 目标包的 InstallerName，必须已经存在于软件源中。
+      placeholder: czadb
     validations:
       required: true
 
   - type: textarea
     id: default_open
     attributes:
-      label: DefaultOpen（可选）
-      description: 默认打开的程序名，支持通配符 `*` 和 `?`
+      label: DefaultOpen (optional)
+      description: 默认打开的程序名，支持通配符 `*` 和 `?`。
       placeholder: |
-        一行一个，例如：
         ADBTOOLS_*
         7zFM.exe
       render: textarea
@@ -44,10 +43,9 @@ body:
   - type: textarea
     id: aliases
     attributes:
-      label: Alias 命令别名（可选）
-      description: 自定义命令别名，格式 `别名: 程序名 参数`
+      label: Alias commands (optional)
+      description: 自定义命令别名，格式为 `alias: program arguments`。
       placeholder: |
-        一行一个，例如：
         connect: adb.exe connect
         install: adb.exe install
       render: textarea
@@ -58,5 +56,5 @@ body:
         ---
         ### 提交后
 
-        Actions 会自动创建 PR，你只需等待审核合并即可。
-        Pier 客户端次日即可通过 `pier o {username}/{InstallerName}` 使用。
+        Actions 会自动创建 PR，你只需要等待审核与合并。
+        合并后即可通过 `pier o {username}/{InstallerName}` 使用。

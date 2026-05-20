@@ -24,39 +24,33 @@ jobs:
           script: |
             const body = context.payload.issue.body;
 
-            // Extract fields from issue form
             const getField = (label) => {
               const re = new RegExp(`### ${label}[\\s\\S]*?\\n\\n([\\s\\S]*?)(?=\\n### |\\n---|$)`);
               const match = body.match(re);
               return match ? match[1].trim() : '';
             };
 
-            const username = getField('用户名 / Username');
+            const username = getField('Username');
             const installerName = getField('InstallerName');
-            const defaultOpen = getField('DefaultOpen（可选）');
-            const aliases = getField('Alias 命令别名（可选）');
+            const defaultOpen = getField('DefaultOpen \\(optional\\)');
+            const aliases = getField('Alias commands \\(optional\\)');
 
             if (!username || !installerName) {
               core.setFailed('Missing required fields: username or installerName');
               return;
             }
 
-            // Validate username (alphanumeric, hyphens, underscores only)
             if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
               core.setFailed('Invalid username: only letters, numbers, hyphens and underscores allowed');
               return;
             }
 
-            // Validate installerName (alphanumeric, hyphens, underscores only)
             if (!/^[a-zA-Z0-9_-]+$/.test(installerName)) {
               core.setFailed('Invalid installerName: only letters, numbers, hyphens and underscores allowed');
               return;
             }
 
-            // Get first letter of username (lowercase) for directory
             const firstLetter = username[0].toLowerCase();
-
-            // Build alias file content
             let content = `[ToUse]\n${installerName}\n\n`;
 
             if (defaultOpen) {
@@ -71,7 +65,6 @@ jobs:
               content += `[Alias]\n::end\n`;
             }
 
-            // File path: alias/<firstLetter>/<username>/<installerName>.sque
             const filePath = `alias/${firstLetter}/${username}/${installerName}.sque`;
 
             core.setOutput('file_path', filePath);
@@ -79,12 +72,11 @@ jobs:
             core.setOutput('username', username);
             core.setOutput('installer_name', installerName);
 
-            // Add a comment to the issue
-            const { data: comment } = await github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🤖 正在处理别名提交...\n\n路径: \`${filePath}\`\n\n\`\`\`ini\n${content}\n\`\`\``
+              body: `Processing alias submission...\n\nPath: \`${filePath}\`\n\n\`\`\`ini\n${content}\n\`\`\``
             });
 
       - name: Create alias file and commit
@@ -95,17 +87,13 @@ jobs:
           USERNAME: ${{ steps.parse.outputs.username }}
           INSTALLER_NAME: ${{ steps.parse.outputs.installer_name }}
         run: |
-          # Create directory structure
           mkdir -p "$(dirname "$FILE_PATH")"
-          
-          # Write the alias file
           echo "$FILE_CONTENT" > "$FILE_PATH"
-          
-          # Check if file already exists in repo
+
           if git ls-files --error-unmatch "$FILE_PATH" 2>/dev/null; then
-            echo "file_exists=true" >> $GITHUB_OUTPUT
+            echo "file_exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "file_exists=false" >> $GITHUB_OUTPUT
+            echo "file_exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create Pull Request
@@ -115,17 +103,17 @@ jobs:
           commit-message: "Add alias: ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
           title: "Add alias: ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
           body: |
-            ## 别名提交 / Alias Submission
+            ## Alias Submission
 
-            自动从 Issue #${{ github.event.issue.number }} 生成。
+            Auto-generated from Issue #${{ github.event.issue.number }}.
 
-            | 字段 | 值 |
+            | Field | Value |
             |------|-----|
-            | 用户名 | `${{ steps.parse.outputs.username }}` |
+            | Username | `${{ steps.parse.outputs.username }}` |
             | InstallerName | `${{ steps.parse.outputs.installer_name }}` |
-            | 文件路径 | `${{ steps.parse.outputs.file_path }}` |
+            | File path | `${{ steps.parse.outputs.file_path }}` |
 
-            Pier 客户端用法: `pier o ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}`
+            Pier usage: `pier o ${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}`
           branch: "alias/${{ steps.parse.outputs.username }}/${{ steps.parse.outputs.installer_name }}"
           delete-branch: true
           labels: alias-pr
@@ -134,31 +122,30 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = ${{ steps.pr.outputs.pull-request-number }};
+            const prNumber = `${{ steps.pr.outputs.pull-request-number }}`;
             const prUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${prNumber}`;
             const filePath = `${{ steps.parse.outputs.file_path }}`;
             const fileExists = `${{ steps.commit.outputs.file_exists }}`;
 
-            let body = `✅ 已创建 PR [#${prNumber}](${prUrl})\n\n`;
-            body += `📁 文件: \`${filePath}\`\n\n`;
+            let body = `Created PR [#${prNumber}](${prUrl})\n\n`;
+            body += `File: \`${filePath}\`\n\n`;
 
             if (fileExists === 'true') {
-              body += `⚠️ **注意**: 该文件在仓库中已存在，PR 将覆盖现有内容。请审核确认。\n\n`;
+              body += `Warning: this file already exists in the repository. The PR will overwrite the current content.\n\n`;
             }
 
-            body += `🔍 审核后合并即可生效。`;
+            body += `It will take effect after review and merge.`;
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: body
+              body
             });
 
-            // Add the alias-pr label to the PR
             if (prNumber) {
               await github.rest.issues.addLabels({
-                issue_number: prNumber,
+                issue_number: Number(prNumber),
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 labels: ['alias-pr']
