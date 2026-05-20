@@ -1,0 +1,11 @@
+[ToUse]
+7zip
+
+[DefaultOpen]
+7zFM.exe
+::end
+
+[Alias]
+4th
+::end
+
