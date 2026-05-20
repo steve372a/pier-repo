@@ -17,91 +17,126 @@ jobs:
 
       - name: Generate Database Files
         run: |
-          # 1. 定义变量
-          PIE_DIR="./sources"
-          OUTPUT_FILE="./db.sque"
-          DBM_FILE="./dbm.sque"
-          TEMP_FILE="./db.tmp"
-          EXTRACT_DIR="./temp_extract"
+          python3 <<'PY'
+          import json
+          import re
+          import zipfile
+          from pathlib import Path
 
-          # 2. 清理环境
-          rm -f $OUTPUT_FILE $DBM_FILE $TEMP_FILE
-          rm -rf $EXTRACT_DIR
-          mkdir -p $EXTRACT_DIR
-          touch $TEMP_FILE
+          PIE_DIR = Path("./sources")
+          OUTPUT_FILE = Path("./db.sque")
+          DBM_FILE = Path("./dbm.sque")
+          PACKAGES_FILE = Path("./packages.json")
 
-          # 3. 遍历 sources/*/*/latest.metadata 文件
-          find "$PIE_DIR" -mindepth 3 -maxdepth 3 -name "latest.metadata" -print0 | while IFS= read -r -d '' metafile; do
-              
-              PKG_DIR="$EXTRACT_DIR/$(basename "$(dirname "$metafile")")"
-              mkdir -p "$PKG_DIR"
-              
-              unzip -q "$metafile" -d "$PKG_DIR" 2>/dev/null || continue
-              
-              METADATA_SQUE="$PKG_DIR/metadata.sque"
-              if [ ! -f "$METADATA_SQUE" ]; then
-                  echo "Warning: metadata.sque not found in $metafile" >&2
+          def decode_bytes(data: bytes) -> str:
+              for encoding in ("utf-8", "gbk", "cp936"):
+                  try:
+                      return data.decode(encoding)
+                  except UnicodeDecodeError:
+                      continue
+              return data.decode("utf-8", errors="replace")
+
+          def parse_sections(text: str) -> dict[str, str]:
+              normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+              lines = normalized.split("\n")
+              sections: dict[str, str] = {}
+              current = None
+              buffer: list[str] = []
+
+              def flush() -> None:
+                  nonlocal buffer, current
+                  if current is None:
+                      return
+                  sections[current] = "\n".join(buffer).strip("\n")
+
+              for line in lines:
+                  match = re.fullmatch(r"\[(.+?)\]", line.strip())
+                  if match:
+                      flush()
+                      current = match.group(1)
+                      buffer = []
+                  elif current is not None:
+                      buffer.append(line)
+
+              flush()
+              return sections
+
+          def first_value(sections: dict[str, str], key: str) -> str:
+              value = sections.get(key, "")
+              for line in value.splitlines():
+                  stripped = line.strip()
+                  if stripped and stripped != "::end":
+                      return stripped
+              return ""
+
+          packages = []
+          db_lines = []
+
+          for metafile in sorted(PIE_DIR.glob("*/*/latest.metadata")):
+              try:
+                  with zipfile.ZipFile(metafile) as archive:
+                      metadata_name = next(
+                          (name for name in archive.namelist() if name.endswith("metadata.sque")),
+                          None,
+                      )
+                      if metadata_name is None:
+                          print(f"Warning: metadata.sque not found in {metafile}")
+                          continue
+                      metadata_text = decode_bytes(archive.read(metadata_name))
+              except zipfile.BadZipFile:
+                  print(f"Warning: invalid metadata zip: {metafile}")
                   continue
-              fi
-              
-              # 字段提取函数：智能识别编码
-              get_field() {
-                  local key=$1
-                  # 提取目标行的下一行内容
-                  local raw_val=$(sed -n "/\[$key\]/{n;p;}" "$METADATA_SQUE" | tr -d '\r' | xargs)
-                  
-                  # 验证是否为合法 UTF-8
-                  if echo "$raw_val" | iconv -f UTF-8 -t UTF-8 >/dev/null 2>&1; then
-                      echo "$raw_val"
-                  else
-                      # 如果不是 UTF-8，则尝试从 GBK 转换
-                      echo "$raw_val" | iconv -f GBK -t UTF-8//IGNORE
-                  fi
+
+              normalized_text = metadata_text.replace("\r\n", "\n").replace("\r", "\n").strip()
+              sections = parse_sections(normalized_text)
+
+              package_dir = metafile.parent.name
+              installer_name = first_value(sections, "InstallerName") or package_dir
+              package_name = first_value(sections, "PackageName") or installer_name
+              version = first_value(sections, "Version") or "0.0.0"
+              os_info = first_value(sections, "OS") or "XP"
+              profile = first_value(sections, "ProFile") or "暂无描述"
+              install_dir = first_value(sections, "InstallDir")
+
+              package = {
+                  "id": installer_name,
+                  "name": package_name,
+                  "version": version,
+                  "os": os_info,
+                  "profile": profile,
+                  "installDir": install_dir,
+                  "metadataPath": metafile.as_posix(),
+                  "metadataText": normalized_text,
+                  "metadataFields": sections,
               }
+              packages.append(package)
+              db_lines.append(
+                  f"{installer_name} | {version} | {os_info} | {profile} | {install_dir}"
+              )
 
-              # 获取字段
-              pkgname=$(get_field "InstallerName")
-              [ -z "$pkgname" ] && pkgname=$(get_field "PackageName")
-              [ -z "$pkgname" ] && pkgname=$(basename -- "$(dirname "$metafile")")
-              
-              version=$(get_field "Version")
-              os_info=$(get_field "OS")
-              profile=$(get_field "ProFile")
-              inst_dir=$(get_field "InstallDir")
+          packages.sort(key=lambda item: (item["id"].casefold(), item["version"]))
+          db_lines.sort(key=str.casefold)
 
-              # 保底处理
-              [ -z "$version" ] && version="0.0.0"
-              [ -z "$os_info" ] && os_info="XP"
-              [ -z "$profile" ] && profile="暂无描述"
-              [ -z "$inst_dir" ] && inst_dir=""
+          OUTPUT_FILE.write_text("\n".join(db_lines) + ("\n" if db_lines else ""), encoding="utf-8")
+          DBM_FILE.write_text(str(len(packages)), encoding="utf-8")
+          PACKAGES_FILE.write_text(
+              json.dumps(packages, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
 
-              # 写入临时文件 (UTF-8 格式)
-              printf "%s | %s | %s | %s | %s\n" "$pkgname" "$version" "$os_info" "$profile" "$inst_dir" >> "$TEMP_FILE"
-              
-              rm -rf "$PKG_DIR"
-          done
-
-          # 4. 排序
-          LC_ALL=C sort -V "$TEMP_FILE" -o "$OUTPUT_FILE"
-
-          # 5. 生成统计文件
-          count=$(wc -l < "$OUTPUT_FILE")
-          printf "%d" "$count" > "$DBM_FILE"
-
-          echo "Database update complete. Processed $count packages (UTF-8 Mode)."
-          rm -f $TEMP_FILE
-          rm -rf $EXTRACT_DIR
+          print(f"Database update complete. Processed {len(packages)} packages.")
+          PY
 
       - name: Commit and Push Changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add db.sque dbm.sque
+          git add db.sque dbm.sque packages.json
           
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Auto: Update UTF-8 database (Smart encoding detection)"
+            git commit -m "Auto: Update package indexes"
             git push
           fi

@@ -1,0 +1,96 @@
+Pier Repo index.html / GitHub Action 改造方案
+
+目标
+1. `index.html` 默认显示全部包。
+2. 用户点击某个包后，页面显示该包 `latest.metadata` 里的 `metadata.sque` 内容。
+3. 站点保持纯静态部署，不引入后端。
+4. 所有动态数据由 GitHub Action 预处理生成。
+5. 先不废弃 `db.sque` 和 `dbm.sque`，保持现有兼容行为。
+
+现状
+1. `index.html` 现在只读取 `db.sque` 和 `dbm.sque`，展示方式是纯文本列表，没有点击详情能力。
+2. `latest.metadata` 实际上是 zip 压缩包，浏览器端不能直接按现有逻辑读取其中的 `metadata.sque`。
+3. 当前 Action 只生成了简化版 `db.sque/dbm.sque`，没有生成可供前端点击后查看详情的结构化数据。
+4. 仓库是静态站点，没有后端接口，前端不能依赖运行时服务解压包。
+
+核心判断
+不要让 `index.html` 在浏览器里现场解压 `.metadata`。
+
+原因
+1. GitHub Pages 是静态托管，没有后端进程可用。
+2. 浏览器端直接拉取每个 `.metadata` 再解压虽然理论可做，但会引入额外 JS 解压库、编码处理、性能和兼容性问题。
+3. 既然仓库已经有 GitHub Action，最稳的做法是把“解压 + 解析 + 转 UTF-8 + 生成前端数据文件”全部前移到构建阶段。
+
+本次确认后的方案
+1. 改 `index.html`。
+2. 新增一个由 GitHub Action 生成的结构化文件 `packages.json`。
+3. 保留 `db.sque` 和 `dbm.sque`，先不改、不删、不废弃。
+4. GitHub Action 在原有生成 `db.sque/dbm.sque` 的基础上，再额外生成 `packages.json`。
+
+`packages.json` 结构建议
+1. 每个包至少包含：
+   - `id`
+   - `name`
+   - `version`
+   - `os`
+   - `profile`
+   - `installDir`
+   - `metadataPath`
+   - `metadataText`
+2. 其中 `metadataText` 直接保存解压并转成 UTF-8 后的 `metadata.sque` 原文。
+3. 如果后面需要，也可以再补 `packageName`、`installerName`、`metadataFields` 这类字段。
+
+前端行为
+1. `index.html` 启动时读取 `packages.json`，默认渲染所有包。
+2. 页面支持关键字搜索。
+3. 点击某个包后，在详情区域显示该包的 `metadata.sque` 内容。
+4. 可以同时显示几个常用字段和原文，或者先只显示原文，优先把链路跑通。
+
+为什么这样能解决“没有后端”的问题
+1. Action 运行在 GitHub 的 CI 环境里，可以用 `unzip` 和 `iconv`。
+2. 页面上线时只需要读静态 JSON，不需要服务器执行任何逻辑。
+3. 所有 zip 解压、编码修正、字段提取，都在 Action 阶段完成。
+
+建议的数据流
+1. Action 遍历 `sources/*/*/latest.metadata`
+2. 解压到临时目录
+3. 读取 `metadata.sque`
+4. 统一转为 UTF-8
+5. 一份数据写入 `db.sque/dbm.sque`
+6. 另一份数据写入 `packages.json`
+7. commit 回仓库
+8. GitHub Pages 直接读取 `packages.json`
+
+不建议的方案
+1. 浏览器端直接 fetch `latest.metadata` 再用 JS 解压。
+2. 浏览器端现场处理 GBK/UTF-8 混合编码。
+3. 继续只依赖 `db.sque` 纯文本格式去承载详情。
+
+原因
+1. 实现复杂度更高。
+2. 页面加载会更慢。
+3. 编码问题会变得更脆弱。
+4. 纯文本结构不适合点击后详情展示。
+
+实施范围
+1. 修改 `index.html`
+2. 修改 `.github/workflows/update.yml`
+3. 新增 `packages.json` 生成逻辑
+4. 不修改其他依赖 `db.sque/dbm.sque` 的地方
+
+实施步骤
+1. 改 GitHub Action：在现有流程中新增生成 `packages.json` 的逻辑。
+2. 保持 `db.sque/dbm.sque` 继续照常生成。
+3. 改 `index.html`：以 `packages.json` 作为页面主数据源，实现默认列表、搜索、点击详情。
+4. 页面详情优先展示 `metadata.sque` 原文；必要时再补一个简要字段区。
+5. 本地验证 `packages.json` 内容，以及页面默认列表、点击详情、搜索行为。
+
+当前建议的默认实现
+1. `packages.json` 放仓库根目录，和 `db.sque/dbm.sque` 同级。
+2. 页面布局用“左侧列表 + 右侧详情”。
+3. 详情至少显示 `metadata.sque` 原文。
+4. `db.sque/dbm.sque` 完全保留，避免影响现有工具链。
+
+待你确认后执行
+1. 我会按上面的范围直接改 `index.html` 和 GitHub Action。
+2. `list/listpackageonline.pie` 已不作为数据源，不会再纳入页面逻辑。

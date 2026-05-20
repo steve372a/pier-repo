@@ -26,6 +26,6 @@ git commit -m "$commit_msg"
 
 # 5. 推送到 GitHub
 echo "📤 正在上传到 GitHub..."
-git push origin main --force
+git push origin main
 
 echo "✅ 同步完成！机器人正在云端生成索引..."

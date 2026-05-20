@@ -1,0 +1,51 @@
+[
+  {
+    "id": "7zip",
+    "name": "7-Zip",
+    "version": "26.00",
+    "os": "XP",
+    "profile": "7-Zip is a file compression software for the Windows operating system.",
+    "installDir": "",
+    "metadataPath": "sources/7/7zip/latest.metadata",
+    "metadataText": "[PackageName]\n7-Zip\n\n[Version]\n26.00\n\n[OS]\nXP\n\n[InstallerName]\n7zip\n\n[URL]\nx86: 7zip-{version}.pie (default)\nx64: 7zip-x64-{version}.pie\n::end\n\n[ProFile]\n7-Zip is a file compression software for the Windows operating system.\n\n[DefaultOpen]\n7zFM.exe\n::end\n\n[Alias]\nzip: 7z.exe a -tzip $1 $2\n7z: 7z.exe a -t7z $1 $2\ngz: 7z.exe a -tgzip $1 $2\nxz: 7z.exe a -txz $1 $2\nunzip: 7z.exe x $1 -o$2\n::end\n\n[Author]\nIgor Pavlov.\n\n[Distributor]\nSanakaprix\n\n[PackageSize]\n4.14 MB\n\n[Notice]\nGNU LGPL with BSD 3-clause and unRAR restrictions.\nSee LICENSE.txt in software directory.",
+    "metadataFields": {
+      "PackageName": "7-Zip",
+      "Version": "26.00",
+      "OS": "XP",
+      "InstallerName": "7zip",
+      "URL": "x86: 7zip-{version}.pie (default)\nx64: 7zip-x64-{version}.pie\n::end",
+      "ProFile": "7-Zip is a file compression software for the Windows operating system.",
+      "DefaultOpen": "7zFM.exe\n::end",
+      "Alias": "zip: 7z.exe a -tzip $1 $2\n7z: 7z.exe a -t7z $1 $2\ngz: 7z.exe a -tgzip $1 $2\nxz: 7z.exe a -txz $1 $2\nunzip: 7z.exe x $1 -o$2\n::end",
+      "Author": "Igor Pavlov.",
+      "Distributor": "Sanakaprix",
+      "PackageSize": "4.14 MB",
+      "Notice": "GNU LGPL with BSD 3-clause and unRAR restrictions.\nSee LICENSE.txt in software directory."
+    }
+  },
+  {
+    "id": "czadb",
+    "name": "czawa ADB Tools",
+    "version": "4.2.3",
+    "os": "8.1",
+    "profile": "Easy-to-Use ADB Management Tool",
+    "installDir": "",
+    "metadataPath": "sources/c/czadb/latest.metadata",
+    "metadataText": "[PackageName]\nczawa ADB Tools\n\n[Version]\n4.2.3\n\n[OS]\n8.1\n\n[InstallerName]\nczadb\n\n[URL]\nczadb-{version}.pie\n\n[ProFile]\nEasy-to-Use ADB Management Tool\n\n[DesktopShortcut]\n\\ADBTOOLS.lnk\n\n[DefaultOpen]\nADBTOOLS_4.2.3\nADBTOOLS_*\n::end\n\n[Alias]\n::end\n\n[Author]\nczawa\n\n[Distributor]\nSanakaprix\n\n[PackageSize]\n12.4 MB\n\n[Notice]\nThis package contains the adb tool from the $brightyellow$Android SDK Platform Tools.\nadb is part of the$brightyellow$ Android Open Source Project (AOSP) $white$and is licensed under the Apache License 2.0.\nFor details, refer to the NOTICE and LICENSE files in the software directory.",
+    "metadataFields": {
+      "PackageName": "czawa ADB Tools",
+      "Version": "4.2.3",
+      "OS": "8.1",
+      "InstallerName": "czadb",
+      "URL": "czadb-{version}.pie",
+      "ProFile": "Easy-to-Use ADB Management Tool",
+      "DesktopShortcut": "\\ADBTOOLS.lnk",
+      "DefaultOpen": "ADBTOOLS_4.2.3\nADBTOOLS_*\n::end",
+      "Alias": "::end",
+      "Author": "czawa",
+      "Distributor": "Sanakaprix",
+      "PackageSize": "12.4 MB",
+      "Notice": "This package contains the adb tool from the $brightyellow$Android SDK Platform Tools.\nadb is part of the$brightyellow$ Android Open Source Project (AOSP) $white$and is licensed under the Apache License 2.0.\nFor details, refer to the NOTICE and LICENSE files in the software directory."
+    }
+  }
+]
