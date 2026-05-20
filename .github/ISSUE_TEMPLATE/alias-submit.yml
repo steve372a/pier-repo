@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## 提交别名映射
+        ## 提交自己的第三方别名模板！
 
         提交后，GitHub Actions 会自动生成 `alias/{首字母}/{user}/{InstallerName}.sque` 文件。
         合并后即可通过 `pier o user/InstallerName` 使用。
@@ -25,7 +25,7 @@ body:
     id: installer_name
     attributes:
       label: InstallerName
-      description: "目标包的 InstallerName，必须已经存在于软件源中。"
+      description: "目标包的 InstallerName(包名)，必须已经存在于软件源中。"
       placeholder: czadb
     validations:
       required: true
