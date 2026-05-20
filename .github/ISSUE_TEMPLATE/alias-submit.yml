@@ -16,7 +16,7 @@ body:
     id: username
     attributes:
       label: Username
-      description: 你的用户名，作为命名空间使用，例如 `sanakaprix`。
+      description: "你的用户名，作为命名空间使用，例如 `sanakaprix`。"
       placeholder: your-github-name
     validations:
       required: true
@@ -25,7 +25,7 @@ body:
     id: installer_name
     attributes:
       label: InstallerName
-      description: 目标包的 InstallerName，必须已经存在于软件源中。
+      description: "目标包的 InstallerName，必须已经存在于软件源中。"
       placeholder: czadb
     validations:
       required: true
@@ -34,21 +34,19 @@ body:
     id: default_open
     attributes:
       label: DefaultOpen (optional)
-      description: 默认打开的程序名，支持通配符 `*` 和 `?`。
+      description: "默认打开的程序名，支持通配符 `*` 和 `?`。"
       placeholder: |
         ADBTOOLS_*
         7zFM.exe
-      render: textarea
 
   - type: textarea
     id: aliases
     attributes:
       label: Alias commands (optional)
-      description: 自定义命令别名，格式为 `alias: program arguments`。
+      description: "自定义命令别名，格式为 `alias: program arguments`。"
       placeholder: |
         connect: adb.exe connect
         install: adb.exe install
-      render: textarea
 
   - type: markdown
     attributes:
